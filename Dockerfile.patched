@@ -1,2 +1,5 @@
-FROM ghcr.io/calibrain/shelfmark:latest
-COPY shelfmark/ /app/shelfmark/
+# Overlay only the OpenAPI route onto the published v1.3.15 image.
+# Do not COPY the whole shelfmark/ tree: fork main may be newer than this digest.
+FROM ghcr.io/calibrain/shelfmark@sha256:dae6e16fc40f42b2558d9f47d05e4ba7a7d268d23365a7c3eba266055249a124
+COPY shelfmark/core/openapi.py /app/shelfmark/core/openapi.py
+COPY shelfmark/main.py /app/shelfmark/main.py
