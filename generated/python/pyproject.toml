@@ -1,6 +1,6 @@
 [project]
 name = "shelfmark_client"
-version = "0.1.1+gf57c4dc"
+version = "0.1.1+g0e8822f"
 description = "Shelfmark API"
 authors = [
   {name = "OpenAPI Generator Community",email = "team@openapitools.org"},
