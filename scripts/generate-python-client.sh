@@ -86,20 +86,21 @@ if [[ -z "$RUNTIME" ]]; then
   echo "Need podman or docker to run OpenAPI Generator." >&2
   exit 1
 fi
-
-rm -rf generated/python
+rm -rf generated/python.tmp
 "$RUNTIME" run --rm \
   -v "$ROOT:/local" \
   "$GENERATOR_IMAGE" generate \
   -g python \
   --library asyncio \
   -i /local/generated/openapi.json \
-  -o /local/generated/python \
+  -o /local/generated/python.tmp \
   --git-user-id "$GIT_USER_ID" \
   --git-repo-id "$GIT_REPO_ID" \
   --additional-properties="packageName=shelfmark_client,projectName=shelfmark-client,packageVersion=${PACKAGE_VERSION},usePyproject=true"
 
-rm -rf generated/python/.github generated/python/.gitlab-ci.yml \
-  generated/python/.travis.yml generated/python/git_push.sh
+rm -rf generated/python.tmp/.github generated/python.tmp/.gitlab-ci.yml \
+  generated/python.tmp/.travis.yml generated/python.tmp/git_push.sh
+rm -rf generated/python
+mv generated/python.tmp generated/python
 
 echo "Generated shelfmark-client ${PACKAGE_VERSION} (git ${GIT_USER_ID}/${GIT_REPO_ID})"
