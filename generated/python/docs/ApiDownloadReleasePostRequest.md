@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **source** | **str** | Release source (e.g., \&quot;direct_download\&quot;) | 
 **source_id** | **str** | ID within the source (e.g., AA MD5 hash) | 
-**title** | **str** | Book title | 
+**title** | **str** | Book title | [optional] 
 **format** | **str** | File format | [optional] 
 **size** | **str** | Human-readable size | [optional] 
 **extra** | **Dict[str, object]** | Additional metadata | [optional] 

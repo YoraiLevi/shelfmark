@@ -61,17 +61,30 @@ fi
 
 GENERATOR_IMAGE="${OPENAPI_GENERATOR_IMAGE:-docker.io/openapitools/openapi-generator-cli:v7.16.0}"
 RUNTIME="${CONTAINER_RUNTIME:-}"
+if [[ -n "$RUNTIME" ]] && ! command -v "$RUNTIME" >/dev/null 2>&1; then
+  RUNTIME=""
+fi
 if [[ -z "$RUNTIME" ]]; then
-  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-    RUNTIME=docker
-  elif command -v podman >/dev/null 2>&1; then
-    RUNTIME=podman
-  elif command -v podman.exe >/dev/null 2>&1; then
-    RUNTIME=podman.exe
-  else
-    echo "Need podman or docker to run OpenAPI Generator." >&2
-    exit 1
-  fi
+  for candidate in docker docker.exe podman podman.exe; do
+    if ! command -v "$candidate" >/dev/null 2>&1; then
+      continue
+    fi
+    if [[ "$candidate" == docker || "$candidate" == docker.exe ]]; then
+      if ! "$candidate" info >/dev/null 2>&1; then
+        continue
+      fi
+      ostype="$("$candidate" info --format '{{.OSType}}' 2>/dev/null | tr -d '\r')"
+      if [[ "$ostype" == windows ]]; then
+        continue
+      fi
+    fi
+    RUNTIME="$candidate"
+    break
+  done
+fi
+if [[ -z "$RUNTIME" ]]; then
+  echo "Need podman or docker to run OpenAPI Generator." >&2
+  exit 1
 fi
 
 rm -rf generated/python

@@ -1048,7 +1048,7 @@ def api_download_release() -> Response | tuple[Response, int]:
     Request Body (JSON):
         source (str): Release source (e.g., "direct_download")
         source_id (str): ID within the source (e.g., AA MD5 hash)
-        title (str): Book title
+        title (str, optional): Book title
         format (str, optional): File format
         size (str, optional): Human-readable size
         extra (dict, optional): Additional metadata
@@ -2061,7 +2061,7 @@ def api_login() -> Response | tuple[Response, int]:
     Request Body:
         username (str): Username
         password (str): Password
-        remember_me (bool): Whether to extend session duration
+        remember_me (bool, optional): Whether to extend session duration
 
     Returns:
         flask.Response: JSON with success status or error message.

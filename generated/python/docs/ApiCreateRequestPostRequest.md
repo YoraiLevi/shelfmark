@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **book_data** | **Dict[str, object]** | Book metadata object (required) | 
-**context** | **Dict[str, object]** | source, content_type, and request_level | 
+**context** | **Dict[str, object]** | source, content_type, and request_level | [optional] 
 **release_data** | **Dict[str, object]** | Specific release when requesting a file | [optional] 
 **note** | **str** | Note for admins | [optional] 
 **on_behalf_of_user_id** | **int** | Admin-only target user | [optional] 

@@ -47,7 +47,6 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
             return ApiDownloadReleasePostRequest(
                 source = '',
                 source_id = '',
-                title = '',
         )
         """
 

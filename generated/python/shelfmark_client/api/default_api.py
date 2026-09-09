@@ -7497,7 +7497,7 @@ class DefaultApi:
     ) -> None:
         """Submit a book request.
 
-        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
+        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict, optional): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
 
         :param api_create_request_post_request: (required)
         :type api_create_request_post_request: ApiCreateRequestPostRequest
@@ -7567,7 +7567,7 @@ class DefaultApi:
     ) -> ApiResponse[None]:
         """Submit a book request.
 
-        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
+        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict, optional): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
 
         :param api_create_request_post_request: (required)
         :type api_create_request_post_request: ApiCreateRequestPostRequest
@@ -7637,7 +7637,7 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Submit a book request.
 
-        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
+        Submit a book request.  Request Body (JSON):     book_data (dict): Book metadata object (required)     context (dict, optional): source, content_type, and request_level     release_data (dict, optional): Specific release when requesting a file     note (str, optional): Note for admins     on_behalf_of_user_id (int, optional): Admin-only target user
 
         :param api_create_request_post_request: (required)
         :type api_create_request_post_request: ApiCreateRequestPostRequest
@@ -8047,7 +8047,7 @@ class DefaultApi:
     ) -> None:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest
@@ -8117,7 +8117,7 @@ class DefaultApi:
     ) -> ApiResponse[None]:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest
@@ -8187,7 +8187,7 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest
@@ -9355,7 +9355,7 @@ class DefaultApi:
     ) -> None:
         """Login endpoint that validates credentials and creates a session.
 
-        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
+        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool, optional): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
 
         :param api_login_post_request: (required)
         :type api_login_post_request: ApiLoginPostRequest
@@ -9425,7 +9425,7 @@ class DefaultApi:
     ) -> ApiResponse[None]:
         """Login endpoint that validates credentials and creates a session.
 
-        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
+        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool, optional): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
 
         :param api_login_post_request: (required)
         :type api_login_post_request: ApiLoginPostRequest
@@ -9495,7 +9495,7 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Login endpoint that validates credentials and creates a session.
 
-        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
+        Login endpoint that validates credentials and creates a session.  Supports both built-in credentials and CWA database authentication. Includes rate limiting: 10 failed attempts = 30 minute lockout.  Request Body:     username (str): Username     password (str): Password     remember_me (bool, optional): Whether to extend session duration  Returns:     flask.Response: JSON with success status or error message.
 
         :param api_login_post_request: (required)
         :type api_login_post_request: ApiLoginPostRequest

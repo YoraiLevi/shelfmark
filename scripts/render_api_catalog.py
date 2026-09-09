@@ -1,13 +1,15 @@
-"""Print a markdown catalog of every path+method in generated/openapi.json."""
+"""Write a markdown catalog of every path+method in generated/openapi.json."""
 
 from __future__ import annotations
 
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC_PATH = ROOT / "generated" / "openapi.json"
+DEFAULT_OUT = ROOT / "generated" / "api-catalog.md"
 
 GROUPS: list[tuple[str, tuple[str, ...]]] = [
     ("Spec and health", ("/openapi.json", "/api/openapi.json", "/api/health")),
@@ -29,8 +31,7 @@ def _group_for(path: str) -> str:
     return "Other"
 
 
-def main() -> int:
-    spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+def render(spec: dict) -> str:
     rows: list[tuple[str, str, str, str, str]] = []
     identifier_only = 0
     for path, methods in spec["paths"].items():
@@ -47,31 +48,46 @@ def main() -> int:
     for row in rows:
         grouped[row[4]].append(row)
 
-    print(f"<!-- catalog: {len(rows)} method/path pairs, {len(spec['paths'])} paths -->")
+    lines = [f"<!-- catalog: {len(rows)} method/path pairs, {len(spec['paths'])} paths -->"]
     if identifier_only:
-        print(f"<!-- warning: {identifier_only} summaries are still identifier-only -->")
+        lines.append(f"<!-- warning: {identifier_only} summaries are still identifier-only -->")
     for title, _prefixes in GROUPS:
         section = grouped.get(title)
         if not section:
             continue
-        print(f"### {title}")
-        print()
-        print("| Method | Path | operationId | Use |")
-        print("| :--- | :--- | :--- | :--- |")
+        lines.extend(
+            [
+                f"### {title}",
+                "",
+                "| Method | Path | operationId | Use |",
+                "| :--- | :--- | :--- | :--- |",
+            ]
+        )
         for path, method, op_id, summary, _group in section:
-            print(f"| {method} | `{path}` | `{op_id}` | {summary} |")
-        print()
+            lines.append(f"| {method} | `{path}` | `{op_id}` | {summary} |")
+        lines.append("")
     other = grouped.get("Other")
     if other:
-        print("### Other")
-        print()
-        print("| Method | Path | operationId | Use |")
-        print("| :--- | :--- | :--- | :--- |")
+        lines.extend(
+            [
+                "### Other",
+                "",
+                "| Method | Path | operationId | Use |",
+                "| :--- | :--- | :--- | :--- |",
+            ]
+        )
         for path, method, op_id, summary, _group in other:
-            print(f"| {method} | `{path}` | `{op_id}` | {summary} |")
-        print()
+            lines.append(f"| {method} | `{path}` | `{op_id}` | {summary} |")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def main(argv: list[str]) -> int:
+    spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+    out = Path(argv[1]) if len(argv) > 1 else DEFAULT_OUT
+    out.write_text(render(spec), encoding="utf-8")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv))

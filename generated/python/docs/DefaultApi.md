@@ -2039,7 +2039,7 @@ Submit a book request.
 
 Request Body (JSON):
     book_data (dict): Book metadata object (required)
-    context (dict): source, content_type, and request_level
+    context (dict, optional): source, content_type, and request_level
     release_data (dict, optional): Specific release when requesting a file
     note (str, optional): Note for admins
     on_behalf_of_user_id (int, optional): Admin-only target user
@@ -2191,7 +2191,7 @@ frontend already has all the release data from the search results.
 Request Body (JSON):
     source (str): Release source (e.g., "direct_download")
     source_id (str): ID within the source (e.g., AA MD5 hash)
-    title (str): Book title
+    title (str, optional): Book title
     format (str, optional): File format
     size (str, optional): Human-readable size
     extra (dict, optional): Additional metadata
@@ -2555,7 +2555,7 @@ Includes rate limiting: 10 failed attempts = 30 minute lockout.
 Request Body:
     username (str): Username
     password (str): Password
-    remember_me (bool): Whether to extend session duration
+    remember_me (bool, optional): Whether to extend session duration
 
 Returns:
     flask.Response: JSON with success status or error message.

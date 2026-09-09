@@ -532,7 +532,7 @@
       "post": {
         "operationId": "api_create_request_post",
         "summary": "Submit a book request.",
-        "description": "Submit a book request.\n\nRequest Body (JSON):\n    book_data (dict): Book metadata object (required)\n    context (dict): source, content_type, and request_level\n    release_data (dict, optional): Specific release when requesting a file\n    note (str, optional): Note for admins\n    on_behalf_of_user_id (int, optional): Admin-only target user",
+        "description": "Submit a book request.\n\nRequest Body (JSON):\n    book_data (dict): Book metadata object (required)\n    context (dict, optional): source, content_type, and request_level\n    release_data (dict, optional): Specific release when requesting a file\n    note (str, optional): Note for admins\n    on_behalf_of_user_id (int, optional): Admin-only target user",
         "parameters": [],
         "responses": {
           "200": {
@@ -580,8 +580,7 @@
                   }
                 },
                 "required": [
-                  "book_data",
-                  "context"
+                  "book_data"
                 ]
               }
             }
@@ -996,7 +995,7 @@
       "post": {
         "operationId": "api_download_release_post",
         "summary": "Queue a release for download.",
-        "description": "Queue a release for download.\n\nThis endpoint is used when downloading from the ReleaseModal where the\nfrontend already has all the release data from the search results.\n\nRequest Body (JSON):\n    source (str): Release source (e.g., \"direct_download\")\n    source_id (str): ID within the source (e.g., AA MD5 hash)\n    title (str): Book title\n    format (str, optional): File format\n    size (str, optional): Human-readable size\n    extra (dict, optional): Additional metadata\n    priority (int, optional): Queue priority, lower is sooner\n\nReturns:\n    flask.Response: JSON status object indicating success or failure.",
+        "description": "Queue a release for download.\n\nThis endpoint is used when downloading from the ReleaseModal where the\nfrontend already has all the release data from the search results.\n\nRequest Body (JSON):\n    source (str): Release source (e.g., \"direct_download\")\n    source_id (str): ID within the source (e.g., AA MD5 hash)\n    title (str, optional): Book title\n    format (str, optional): File format\n    size (str, optional): Human-readable size\n    extra (dict, optional): Additional metadata\n    priority (int, optional): Queue priority, lower is sooner\n\nReturns:\n    flask.Response: JSON status object indicating success or failure.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1051,8 +1050,7 @@
                 },
                 "required": [
                   "source",
-                  "source_id",
-                  "title"
+                  "source_id"
                 ]
               }
             }
@@ -1400,7 +1398,7 @@
       "post": {
         "operationId": "api_login_post",
         "summary": "Login endpoint that validates credentials and creates a session.",
-        "description": "Login endpoint that validates credentials and creates a session.\n\nSupports both built-in credentials and CWA database authentication.\nIncludes rate limiting: 10 failed attempts = 30 minute lockout.\n\nRequest Body:\n    username (str): Username\n    password (str): Password\n    remember_me (bool): Whether to extend session duration\n\nReturns:\n    flask.Response: JSON with success status or error message.",
+        "description": "Login endpoint that validates credentials and creates a session.\n\nSupports both built-in credentials and CWA database authentication.\nIncludes rate limiting: 10 failed attempts = 30 minute lockout.\n\nRequest Body:\n    username (str): Username\n    password (str): Password\n    remember_me (bool, optional): Whether to extend session duration\n\nReturns:\n    flask.Response: JSON with success status or error message.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1438,8 +1436,7 @@
                 },
                 "required": [
                   "username",
-                  "password",
-                  "remember_me"
+                  "password"
                 ]
               }
             }

@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **username** | **str** | Username | 
 **password** | **str** | Password | 
-**remember_me** | **bool** | Whether to extend session duration | 
+**remember_me** | **bool** | Whether to extend session duration | [optional] 
 
 ## Example
 

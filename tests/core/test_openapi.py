@@ -89,6 +89,15 @@ def test_request_body_from_docstring_marks_optional_fields() -> None:
     list_schema = request_body_from_docstring(list_doc)["content"]["application/json"]["schema"]
     assert list_schema["properties"]["requests"]["type"] == "array"
     assert "items" in list_schema["properties"]["requests"]
+    prose = request_body_from_docstring(
+        """Update settings.
+
+    Request Body:
+        JSON object with setting keys and values to update.
+    """
+    )
+    assert prose is not None
+    assert prose["content"]["application/json"]["schema"]["additionalProperties"] is True
 
 
 def test_operation_summary_uses_handler_docstring() -> None:
@@ -108,16 +117,22 @@ def test_operation_summary_uses_handler_docstring() -> None:
 def test_download_and_login_have_json_request_bodies(main_module) -> None:
     spec = build_openapi_spec(main_module.app)
     download = spec["paths"]["/api/releases/download"]["post"]["requestBody"]
-    props = download["content"]["application/json"]["schema"]["properties"]
+    schema = download["content"]["application/json"]["schema"]
+    props = schema["properties"]
+    assert schema["required"] == ["source", "source_id"]
     assert "source" in props
     assert "source_id" in props
     assert "title" in props
     login = spec["paths"]["/api/auth/login"]["post"]["requestBody"]
-    login_props = login["content"]["application/json"]["schema"]["properties"]
+    login_schema = login["content"]["application/json"]["schema"]
+    login_props = login_schema["properties"]
     assert "username" in login_props
     assert "password" in login_props
+    assert login_schema["required"] == ["username", "password"]
     requests_body = spec["paths"]["/api/requests"]["post"]["requestBody"]
     assert "book_data" in requests_body["content"]["application/json"]["schema"]["properties"]
+    settings = spec["paths"]["/api/settings/{tab_name}"]["put"]["requestBody"]
+    assert settings["content"]["application/json"]["schema"]["additionalProperties"] is True
 
 @pytest.fixture(scope="module")
 def main_module():

@@ -644,7 +644,7 @@ def register_request_routes(
 
         Request Body (JSON):
             book_data (dict): Book metadata object (required)
-            context (dict): source, content_type, and request_level
+            context (dict, optional): source, content_type, and request_level
             release_data (dict, optional): Specific release when requesting a file
             note (str, optional): Note for admins
             on_behalf_of_user_id (int, optional): Admin-only target user

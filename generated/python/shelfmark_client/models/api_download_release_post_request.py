@@ -28,7 +28,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
     """ # noqa: E501
     source: StrictStr = Field(description="Release source (e.g., \"direct_download\")")
     source_id: StrictStr = Field(description="ID within the source (e.g., AA MD5 hash)")
-    title: StrictStr = Field(description="Book title")
+    title: Optional[StrictStr] = Field(default=None, description="Book title")
     format: Optional[StrictStr] = Field(default=None, description="File format")
     size: Optional[StrictStr] = Field(default=None, description="Human-readable size")
     extra: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")

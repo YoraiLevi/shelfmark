@@ -27,7 +27,7 @@ class ApiCreateRequestPostRequest(BaseModel):
     ApiCreateRequestPostRequest
     """ # noqa: E501
     book_data: Dict[str, Any] = Field(description="Book metadata object (required)")
-    context: Dict[str, Any] = Field(description="source, content_type, and request_level")
+    context: Optional[Dict[str, Any]] = Field(default=None, description="source, content_type, and request_level")
     release_data: Optional[Dict[str, Any]] = Field(default=None, description="Specific release when requesting a file")
     note: Optional[StrictStr] = Field(default=None, description="Note for admins")
     on_behalf_of_user_id: Optional[StrictInt] = Field(default=None, description="Admin-only target user")

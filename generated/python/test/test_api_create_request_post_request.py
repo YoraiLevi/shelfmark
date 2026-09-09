@@ -44,7 +44,6 @@ class TestApiCreateRequestPostRequest(unittest.TestCase):
         else:
             return ApiCreateRequestPostRequest(
                 book_data = { },
-                context = { },
         )
         """
 

@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,7 +28,7 @@ class ApiLoginPostRequest(BaseModel):
     """ # noqa: E501
     username: StrictStr = Field(description="Username")
     password: StrictStr = Field(description="Password")
-    remember_me: StrictBool = Field(description="Whether to extend session duration")
+    remember_me: Optional[StrictBool] = Field(default=None, description="Whether to extend session duration")
     __properties: ClassVar[List[str]] = ["username", "password", "remember_me"]
 
     model_config = ConfigDict(

@@ -43,7 +43,6 @@ class TestApiLoginPostRequest(unittest.TestCase):
             return ApiLoginPostRequest(
                 username = '',
                 password = '',
-                remember_me = True,
         )
         """
 
