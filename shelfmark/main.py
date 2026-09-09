@@ -62,6 +62,7 @@ from shelfmark.core.notifications import (
     notify_admin,
     notify_user,
 )
+from shelfmark.core.openapi import OPENAPI_PATHS, register_openapi_routes
 from shelfmark.core.prefix_middleware import PrefixMiddleware
 from shelfmark.core.release_inspect_routes import register_release_inspect_routes
 from shelfmark.core.request_helpers import (
@@ -126,7 +127,14 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0  # Disable caching
 app.config["APPLICATION_ROOT"] = BASE_PATH or "/"
 wsgi_app = cast(Any, ProxyFix(app.wsgi_app, x_host=1, x_port=1))
 if BASE_PATH:
-    wsgi_app = cast(Any, PrefixMiddleware(wsgi_app, BASE_PATH, bypass_paths={"/api/health"}))
+    wsgi_app = cast(
+        Any,
+        PrefixMiddleware(
+            wsgi_app,
+            BASE_PATH,
+            bypass_paths={"/api/health", *OPENAPI_PATHS},
+        ),
+    )
 app.wsgi_app = wsgi_app
 
 # Socket.IO async mode.
@@ -672,7 +680,7 @@ def proxy_auth_middleware() -> Response | tuple[Response, int] | None:
         return None
 
     # Skip for public endpoints that don't need auth
-    if request.path == "/api/health":
+    if request.path == "/api/health" or request.path in OPENAPI_PATHS:
         return None
 
     def get_proxy_header(header_name: str) -> str | None:
@@ -3349,6 +3357,8 @@ def api_onboarding_skip() -> Response | tuple[Response, int]:
         logger.error_trace(f"Onboarding skip error: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+register_openapi_routes(app)
 
 # Catch-all route for React Router (must be last)
 # This handles client-side routing by serving index.html for any unmatched routes

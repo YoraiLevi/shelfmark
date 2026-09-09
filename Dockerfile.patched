@@ -1,0 +1,2 @@
+FROM ghcr.io/calibrain/shelfmark:latest
+COPY shelfmark/ /app/shelfmark/
