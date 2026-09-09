@@ -26,14 +26,13 @@ ghcr.io/<github-username>/shelfmark-lite:dev
 
 The first package publish is private until you set **Package settings → Change package visibility → Public**.
 
-After a prune of the local Podman store, rebuild the overlay used on this workstation:
+Rebuild the overlay:
 
-```powershell
-cd C:\Users\devic\source\testing-area\https-github.com-calibrain-shelfmark
+```bash
 podman build -f Dockerfile.patched -t localhost/shelfmark:patched .
 ```
 
-`Dockerfile.patched` copies only `openapi.py` and `main.py` onto the pinned upstream v1.3.15 digest.
+`Dockerfile.patched` copies OpenAPI and the route modules whose docstrings feed the spec onto the pinned upstream v1.3.15 digest.
 
 ## OpenAPI
 
@@ -56,7 +55,7 @@ uv run python scripts/export_openapi.py
 
 Directory `generated/python` is produced by OpenAPI Generator (`python` + `--library asyncio` + `usePyproject=true`). CI regenerates it on every relevant push to `main` and versions the package as:
 
-- `0.1.<commit-count>+g<short-sha>` on `main`
+- OpenAPI `info.version` plus `+g<short-sha>` on branch builds
 - the tag without the leading `v` on `v*` releases
 
 That version tracks git history and lines up with image `sha-*` / semver tags.
@@ -73,17 +72,17 @@ bash scripts/generate-python-client.sh
 # pyproject.toml
 [project]
 dependencies = [
-  "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@main#subdirectory=generated/python",
+  "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=generated/python",
 ]
 ```
 
 Or:
 
 ```bash
-uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@main#subdirectory=generated/python"
+uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=generated/python"
 ```
 
-Pin a commit or tag instead of `main` when you want a frozen client:
+Pin a commit or tag instead of `feature/python-client` when you want a frozen client:
 
 ```bash
 uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@<tag-or-commit-sha>#subdirectory=generated/python"
@@ -94,110 +93,49 @@ The package import name is `shelfmark_client`. Requires Python 3.9+ (`aiohttp`, 
 
 ## Search and Download Example
 
-Flow: metadata search (ISBN or title) → release search → queue download on the Shelfmark node → wait until the queue is done → copy the file off the node.
+Flow: metadata search (ISBN or title) → release search → queue download on the Shelfmark node → wait until the queue is done → copy the file off the node via `GET /api/localdownload`. The script never reads the node's filesystem.
 
-On this workstation the node writes under `C:\Users\devic\.services\data\shelfmark\books`. You can also pull bytes through `GET /api/localdownload?id=<task-or-md5>`.
+Runnable copy: [`examples/search_and_fetch.py`](../examples/search_and_fetch.py).
 
-```python
-import asyncio
-from pathlib import Path
-
-from shelfmark_client import (
-    ApiClient,
-    ApiDownloadReleasePostRequest,
-    ApiLoginPostRequest,
-    Configuration,
-    DefaultApi,
-)
-
-HOST = "http://localhost:8084"
-NODE_BOOKS = Path(r"C:\Users\devic\.services\data\shelfmark\books")
-LOCAL_DIR = Path.home() / "Downloads" / "shelfmark"
-
-
-async def search_and_fetch(*, isbn: str | None = None, title: str | None = None) -> None:
-    query = isbn or title
-    if not query:
-        raise SystemExit("pass isbn= or title=")
-
-    config = Configuration(host=HOST)
-    async with ApiClient(config) as client:
-        api = DefaultApi(client)
-
-        books = await api.api_metadata_search_get(
-            query=query,
-            provider="openlibrary",
-            limit=10,
-        )
-        # Generated return type is untyped (spec has no response schema).
-        hits = (books or {}).get("books") or []
-        if not hits:
-            raise SystemExit(f"no metadata hits for {query!r}")
-        book = hits[0]
-        provider = book["provider"]
-        book_id = book["provider_id"]
-
-        releases = await api.api_releases_get(
-            provider=provider,
-            book_id=book_id,
-            isbn=[isbn] if isbn else None,
-            title=title,
-            source="direct_download",
-        )
-        items = (releases or {}).get("releases") or []
-        if not items:
-            raise SystemExit("no releases (source may be blocked or unconfigured)")
-        release = items[0]
-
-        queued = await api.api_download_release_post(
-            api_download_release_post_request=ApiDownloadReleasePostRequest(
-                source=release.get("source") or "direct_download",
-                source_id=release["source_id"],
-                title=release.get("title") or book.get("title"),
-                format=release.get("format"),
-                extra=release.get("extra") or {},
-            )
-        )
-        print("queued", queued)
-
-        task_id = release["source_id"]
-        for _ in range(60):
-            status = await api.api_status_get()
-            entry = (status or {}).get(task_id) or {}
-            state = str(entry.get("status") or "")
-            if state.lower() in {"complete", "completed", "done", "available"}:
-                break
-            await asyncio.sleep(5)
-
-        LOCAL_DIR.mkdir(parents=True, exist_ok=True)
-        copied = False
-        if NODE_BOOKS.exists():
-            matches = sorted(NODE_BOOKS.rglob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
-            files = [p for p in matches if p.is_file()]
-            if files:
-                dest = LOCAL_DIR / files[0].name
-                dest.write_bytes(files[0].read_bytes())
-                print("copied from node hostPath", dest)
-                copied = True
-
-        if not copied:
-            raw = await api.api_local_download_get_without_preload_content(id=task_id)
-            body = await raw.read()
-            dest = LOCAL_DIR / f"{task_id}.bin"
-            dest.write_bytes(body)
-            print("copied via /api/localdownload", dest)
-
-
-if __name__ == "__main__":
-    # ISBN general search (not a strict ISBN operator).
-    asyncio.run(search_and_fetch(isbn="9780140449136"))
-    # Title search:
-    # asyncio.run(search_and_fetch(title="Crime and Punishment"))
+```bash
+uv run --with "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=generated/python" \
+  python examples/search_and_fetch.py --isbn 9780140449136 --host http://127.0.0.1:8084 --output ./downloads
 ```
 
-`api_download_release_post` queues work on the **node**. It does not stream the file to the caller. Copy from `data/shelfmark/books` or `/api/localdownload` after the queue reports completion.
+### Inputs
+
+- `--isbn` or `--title` (one required)
+- `--host` (default `http://127.0.0.1:8084`)
+- `--output` dir (optional; if omitted, queue and print status only)
+
+### Outputs
+
+Prints the metadata hit and the queued task. When `--output` is set, writes the finished file into that directory via `/api/localdownload`.
+
+### Functions
+
+| Function | Role |
+| :--- | :--- |
+| `connect_client` | Open an asyncio `ApiClient` for `--host` |
+| `find_book` | Metadata search; first hit |
+| `find_release` | Release search; first downloadable item |
+| `queue_release` | POST `/api/releases/download` |
+| `wait_until_done` | Poll `/api/status` until complete / completed / done / available |
+| `save_download` | `GET /api/localdownload` and write the bytes |
+| `main` | argparse + the flow above |
+
+`api_download_release_post` queues work on the **node**. It does not stream the file to the caller. Pull bytes through `/api/localdownload` after the queue reports completion.
 
 When `AUTH_METHOD` is not `none`, call `api_login_post(api_login_post_request=ApiLoginPostRequest(username=..., password=...))` first and reuse the `ApiClient` cookie jar.
+
+### uvx CLI
+
+The same flow is also a console script, `shelfmark-dl`, that you can run without writing Python:
+
+```bash
+uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=cli" shelfmark-dl --help
+uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=cli" shelfmark-dl --host http://127.0.0.1:8084 --isbn --output ./downloads 9780140449136
+```
 
 ## Every HTTP Endpoint
 
