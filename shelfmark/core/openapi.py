@@ -126,6 +126,32 @@ _EXTRA_QUERY_PARAMETERS: dict[str, list[dict[str, Any]]] = {
     ],
 }
 
+_REQUEST_BODIES: dict[tuple[str, str], dict[str, Any]] = {
+    ("/api/releases/download", "post"): {
+        "required": True,
+        "content": {
+            "application/json": {
+                "schema": {
+                    "type": "object",
+                    "required": ["source", "source_id"],
+                    "properties": {
+                        "source": {"type": "string", "description": "Release source name."},
+                        "source_id": {
+                            "type": "string",
+                            "description": "ID within the source, such as an MD5.",
+                        },
+                        "title": {"type": "string"},
+                        "format": {"type": "string"},
+                        "size": {"type": "string"},
+                        "extra": {"type": "object"},
+                        "priority": {"type": "integer", "default": 0},
+                    },
+                }
+            }
+        },
+    },
+}
+
 
 def flask_rule_to_openapi_path(rule: str) -> str:
     """Convert a Flask URL rule to an OpenAPI path template."""
@@ -214,7 +240,7 @@ def build_openapi_spec(app: Flask) -> dict[str, Any]:
         )
         item = paths.setdefault(openapi_path, {})
         for method in methods:
-            item[method.lower()] = {
+            operation: dict[str, Any] = {
                 "operationId": f"{rule.endpoint}_{method.lower()}".replace(".", "_"),
                 "summary": summary,
                 "description": doc,
@@ -226,6 +252,10 @@ def build_openapi_spec(app: Flask) -> dict[str, Any]:
                     "404": {"description": "Not found"},
                 },
             }
+            request_body = _REQUEST_BODIES.get((rule.rule, method.lower()))
+            if request_body is not None:
+                operation["requestBody"] = request_body
+            item[method.lower()] = operation
 
     version = os.environ.get("RELEASE_VERSION") or os.environ.get("BUILD_VERSION") or "0.1.0"
     return {

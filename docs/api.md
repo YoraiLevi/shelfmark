@@ -1,6 +1,6 @@
 # HTTP API
 
-Shelfmark has no separately published OpenAPI catalog. The live description is generated from Flask routes on the running app.
+The live OpenAPI 3 document is `GET /openapi.json` and `GET /api/openapi.json`. Every route, the generated uv client, and search/download examples are in [Fork Additions](fork.md).
 
 ## Spec Endpoints
 
