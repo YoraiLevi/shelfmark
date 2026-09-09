@@ -26,13 +26,13 @@ ghcr.io/<github-username>/shelfmark-lite:dev
 
 The first package publish is private until you set **Package settings → Change package visibility → Public**.
 
-Rebuild the overlay:
+Rebuild locally:
 
 ```bash
-podman build -f Dockerfile.patched -t localhost/shelfmark:patched .
+podman build -t localhost/shelfmark .
 ```
 
-`Dockerfile.patched` copies OpenAPI and the route modules whose docstrings feed the spec onto the pinned upstream v1.3.15 digest.
+This tree builds the image from source (frontend + Python) via the root `Dockerfile`; there is no overlay on an upstream digest.
 
 ## OpenAPI
 
@@ -140,7 +140,7 @@ uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/pytho
 
 ## Every HTTP Endpoint
 
-This table is generated from `generated/openapi.json` (`python scripts/render_api_catalog.py`, writes `generated/api-catalog.md`): **69** method/path pairs on **61** paths. Live list: `GET /openapi.json`. Client method names are the `operationId` values. The running overlay at `localhost:8084` lags this file until `localhost/shelfmark:patched` is rebuilt.
+This table is generated from `generated/openapi.json` (`python scripts/render_api_catalog.py`, writes `generated/api-catalog.md`): **69** method/path pairs on **61** paths. Live list: `GET /openapi.json`. Client method names are the `operationId` values. A server already running at `localhost:8084` lags this file until its image is rebuilt.
 
 <!-- catalog: 69 method/path pairs, 61 paths -->
 ### Spec and health

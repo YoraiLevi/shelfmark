@@ -67,7 +67,6 @@ def test_build_openapi_spec_includes_api_routes_only() -> None:
     assert "/api/openapi.json" in spec["paths"]
 
 
-
 def test_request_body_from_docstring_marks_optional_fields() -> None:
     doc = """Login.
 
@@ -133,6 +132,7 @@ def test_download_and_login_have_json_request_bodies(main_module) -> None:
     assert "book_data" in requests_body["content"]["application/json"]["schema"]["properties"]
     settings = spec["paths"]["/api/settings/{tab_name}"]["put"]["requestBody"]
     assert settings["content"]["application/json"]["schema"]["additionalProperties"] is True
+
 
 @pytest.fixture(scope="module")
 def main_module():

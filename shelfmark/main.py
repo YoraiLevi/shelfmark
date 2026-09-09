@@ -3361,6 +3361,7 @@ def api_onboarding_skip() -> Response | tuple[Response, int]:
 
 register_openapi_routes(app)
 
+
 # Catch-all route for React Router (must be last)
 # This handles client-side routing by serving index.html for any unmatched routes
 @app.route("/<path:path>")

@@ -1,4 +1,8 @@
-"""shelfmark-dl: search a Shelfmark node and optionally queue a download."""
+"""shelfmark-dl: search a Shelfmark node and optionally queue a download.
+
+Install and usage live in ``docs/fork.md`` (uvx from
+``#subdirectory=generated/python``). Run ``shelfmark-dl --help`` for flags.
+"""
 
 from __future__ import annotations
 

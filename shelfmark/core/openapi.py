@@ -131,7 +131,6 @@ _EXTRA_QUERY_PARAMETERS: dict[str, list[dict[str, Any]]] = {
 }
 
 
-
 def flask_rule_to_openapi_path(rule: str) -> str:
     """Convert a Flask URL rule to an OpenAPI path template."""
     return _CONVERTER.sub(r"{\g<name>}", rule)
