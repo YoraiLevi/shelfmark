@@ -130,11 +130,12 @@ When `AUTH_METHOD` is not `none`, call `api_login_post(api_login_post_request=Ap
 
 ### uvx CLI
 
-The same flow is also a console script, `shelfmark-dl`, that you can run without writing Python:
+The same flow is a console script on the generated client package (`aiohttp` / `pydantic` only):
 
 ```bash
-uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=cli" shelfmark-dl --help
-uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=cli" shelfmark-dl --host http://127.0.0.1:8084 --isbn --output ./downloads 9780140449136
+uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=generated/python" shelfmark-dl --help
+uvx --from "git+https://github.com/<github-username>/shelfmark.git@feature/python-client#subdirectory=generated/python" \
+  shelfmark-dl --host http://127.0.0.1:8084 --isbn --output ./downloads 9780140449136
 ```
 
 ## Every HTTP Endpoint

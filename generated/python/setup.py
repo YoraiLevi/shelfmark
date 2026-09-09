@@ -43,6 +43,11 @@ setup(
     install_requires=REQUIRES,
     packages=find_packages(exclude=["test", "tests"]),
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "shelfmark-dl=shelfmark_dl.__main__:main",
+        ],
+    },
     long_description_content_type='text/markdown',
     long_description="""\
     HTTP API for the running Shelfmark instance. Generated from Flask routes. There is no separate published spec. GET /openapi.json and GET /api/openapi.json are unauthenticated. Most other /api/* routes use login_required when authentication is enabled. ISBN metadata search is GET /api/metadata/search?query&#x3D;; the handler does not accept search_type. ISBN file search is GET /api/releases with isbn&#x3D; and source&#x3D;direct_download.

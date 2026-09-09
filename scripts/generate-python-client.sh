@@ -107,6 +107,8 @@ if [[ ! -d generated/python.tmp ]]; then
   exit 1
 fi
 
+run_python scripts/install_cli_into_client.py generated/python.tmp
+
 rm -rf generated/python.tmp/.github generated/python.tmp/.gitlab-ci.yml \
   generated/python.tmp/.travis.yml generated/python.tmp/git_push.sh
 rm -rf generated/python
