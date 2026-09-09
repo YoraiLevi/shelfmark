@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+trap 'rc=$?; rm -rf "$ROOT/generated/python.tmp"; exit "$rc"' EXIT
 
 run_python() {
   if [[ -n "${PYTHON_BIN:-}" ]]; then
@@ -87,7 +88,7 @@ if [[ -z "$RUNTIME" ]]; then
   exit 1
 fi
 rm -rf generated/python.tmp
-"$RUNTIME" run --rm \
+if ! "$RUNTIME" run --rm \
   -v "$ROOT:/local" \
   "$GENERATOR_IMAGE" generate \
   -g python \
@@ -97,6 +98,14 @@ rm -rf generated/python.tmp
   --git-user-id "$GIT_USER_ID" \
   --git-repo-id "$GIT_REPO_ID" \
   --additional-properties="packageName=shelfmark_client,projectName=shelfmark-client,packageVersion=${PACKAGE_VERSION},usePyproject=true"
+then
+  echo "OpenAPI Generator failed" >&2
+  exit 1
+fi
+if [[ ! -d generated/python.tmp ]]; then
+  echo "OpenAPI Generator produced no output" >&2
+  exit 1
+fi
 
 rm -rf generated/python.tmp/.github generated/python.tmp/.gitlab-ci.yml \
   generated/python.tmp/.travis.yml generated/python.tmp/git_push.sh
