@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - "shelfmark/**"
+      - "cli/**"
       - "scripts/export_openapi.py"
       - "scripts/generate-python-client.sh"
+      - "scripts/install_cli_into_client.py"
       - ".github/workflows/generate-python-client.yml"
   workflow_dispatch:
 
