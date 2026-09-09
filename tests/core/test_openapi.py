@@ -66,6 +66,29 @@ def test_build_openapi_spec_includes_api_routes_only() -> None:
     assert "/api/openapi.json" in spec["paths"]
 
 
+
+def test_human_summary_replaces_identifier_docstrings() -> None:
+    app = Flask(__name__)
+
+    @app.route("/api/activity/dismiss", methods=["POST"])
+    def api_activity_dismiss() -> str:
+        """api_activity_dismiss"""
+        return "ok"
+
+    spec = build_openapi_spec(app)
+    assert spec["paths"]["/api/activity/dismiss"]["post"]["summary"] == (
+        "Dismiss one activity item"
+    )
+
+
+def test_download_release_has_json_request_body(main_module) -> None:
+    spec = build_openapi_spec(main_module.app)
+    body = spec["paths"]["/api/releases/download"]["post"]["requestBody"]
+    props = body["content"]["application/json"]["schema"]["properties"]
+    assert "source" in props
+    assert "source_id" in props
+    assert "title" in props
+
 @pytest.fixture(scope="module")
 def main_module():
     """Import `shelfmark.main` with background startup disabled."""

@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _prepare_test_env() -> None:
     """Point Shelfmark at temp dirs so importing main.py does not touch /config."""
+    os.environ.setdefault("RELEASE_VERSION", "1.3.15")
     temp_base = tempfile.mkdtemp(prefix="shelfmark_openapi_")
     os.environ.setdefault("LOG_ROOT", temp_base)
     os.environ.setdefault("CONFIG_DIR", str(Path(temp_base) / "config"))

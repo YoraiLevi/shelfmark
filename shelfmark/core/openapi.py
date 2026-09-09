@@ -219,6 +219,44 @@ def _should_include_rule(rule: str) -> bool:
     return rule.startswith("/api/")
 
 
+_ENDPOINT_SUMMARIES: dict[str, str] = {
+    "api_activity_dismiss": "Dismiss one activity item",
+    "api_activity_dismiss_many": "Dismiss many activity items",
+    "api_activity_history": "List activity history",
+    "api_activity_history_clear": "Clear activity history",
+    "api_activity_snapshot": "Current activity snapshot",
+    "admin_booklore_options": "List Booklore libraries for admin settings",
+    "admin_download_defaults": "Default download destination for new users",
+    "api_admin_list_requests": "Admin list of book requests",
+    "api_admin_request_counts": "Admin counts of pending book requests",
+    "admin_settings_overrides_summary": "Summary of per-user settings overrides",
+    "admin_get_delivery_preferences": "Delivery preferences for one user",
+    "admin_get_effective_settings": "Merged settings for one user",
+    "admin_get_notification_preferences": "Notification preferences for one user",
+    "admin_get_search_preferences": "Search preferences for one user",
+    "admin_test_notification_preferences": "Send a test notification for one user",
+    "api_request_policy": "Request policy for the current user",
+    "api_list_requests": "List the current user's book requests",
+    "api_create_request": "Submit a book request",
+    "api_create_requests_batch": "Submit many book requests",
+    "api_cancel_request": "Cancel one of the current user's requests",
+    "api_inspect_release": "Inspect a release before queueing a download",
+    "users_me_edit_context": "Edit-form context for the current user",
+    "users_me_test_notification_preferences": "Send a test notification to the current user",
+    "users_me_update": "Update the current user",
+    "api_admin_fulfil_request": "Fulfil a book request",
+    "api_admin_reject_request": "Reject a book request",
+}
+
+
+def _human_summary(endpoint: str, doc: str) -> str:
+    """Prefer a real sentence over a bare function name."""
+    first = doc.split("\n", 1)[0].strip() if doc else ""
+    if first and " " in first:
+        return first
+    return _ENDPOINT_SUMMARIES.get(endpoint, first or endpoint)
+
+
 def build_openapi_spec(app: Flask) -> dict[str, Any]:
     """Return an OpenAPI 3.0 document covering HTTP API routes."""
     paths: dict[str, Any] = {}
@@ -231,7 +269,7 @@ def build_openapi_spec(app: Flask) -> dict[str, Any]:
 
         view = app.view_functions.get(rule.endpoint)
         doc = inspect.getdoc(view) or ""
-        summary = doc.split("\n", 1)[0].strip() if doc else rule.endpoint
+        summary = _human_summary(rule.endpoint, doc)
         openapi_path = flask_rule_to_openapi_path(rule.rule)
         parameters = _merge_parameters(
             _path_parameters(rule.rule),

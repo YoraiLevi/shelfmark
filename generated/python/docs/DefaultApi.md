@@ -4,41 +4,41 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**admin_booklore_options_get**](DefaultApi.md#admin_booklore_options_get) | **GET** /api/admin/booklore-options | admin_booklore_options
+[**admin_booklore_options_get**](DefaultApi.md#admin_booklore_options_get) | **GET** /api/admin/booklore-options | List Booklore libraries for admin settings
 [**admin_create_user_post**](DefaultApi.md#admin_create_user_post) | **POST** /api/admin/users | Create a new user with password authentication.
 [**admin_delete_user_delete**](DefaultApi.md#admin_delete_user_delete) | **DELETE** /api/admin/users/{user_id} | Delete a user.
-[**admin_download_defaults_get**](DefaultApi.md#admin_download_defaults_get) | **GET** /api/admin/download-defaults | admin_download_defaults
-[**admin_get_delivery_preferences_get**](DefaultApi.md#admin_get_delivery_preferences_get) | **GET** /api/admin/users/{user_id}/delivery-preferences | admin_get_delivery_preferences
-[**admin_get_effective_settings_get**](DefaultApi.md#admin_get_effective_settings_get) | **GET** /api/admin/users/{user_id}/effective-settings | admin_get_effective_settings
-[**admin_get_notification_preferences_get**](DefaultApi.md#admin_get_notification_preferences_get) | **GET** /api/admin/users/{user_id}/notification-preferences | admin_get_notification_preferences
-[**admin_get_search_preferences_get**](DefaultApi.md#admin_get_search_preferences_get) | **GET** /api/admin/users/{user_id}/search-preferences | admin_get_search_preferences
+[**admin_download_defaults_get**](DefaultApi.md#admin_download_defaults_get) | **GET** /api/admin/download-defaults | Default download destination for new users
+[**admin_get_delivery_preferences_get**](DefaultApi.md#admin_get_delivery_preferences_get) | **GET** /api/admin/users/{user_id}/delivery-preferences | Delivery preferences for one user
+[**admin_get_effective_settings_get**](DefaultApi.md#admin_get_effective_settings_get) | **GET** /api/admin/users/{user_id}/effective-settings | Merged settings for one user
+[**admin_get_notification_preferences_get**](DefaultApi.md#admin_get_notification_preferences_get) | **GET** /api/admin/users/{user_id}/notification-preferences | Notification preferences for one user
+[**admin_get_search_preferences_get**](DefaultApi.md#admin_get_search_preferences_get) | **GET** /api/admin/users/{user_id}/search-preferences | Search preferences for one user
 [**admin_get_user_get**](DefaultApi.md#admin_get_user_get) | **GET** /api/admin/users/{user_id} | Get a user by ID with their settings.
 [**admin_list_users_get**](DefaultApi.md#admin_list_users_get) | **GET** /api/admin/users | List all users.
-[**admin_settings_overrides_summary_get**](DefaultApi.md#admin_settings_overrides_summary_get) | **GET** /api/admin/settings/overrides-summary | admin_settings_overrides_summary
+[**admin_settings_overrides_summary_get**](DefaultApi.md#admin_settings_overrides_summary_get) | **GET** /api/admin/settings/overrides-summary | Summary of per-user settings overrides
 [**admin_sync_cwa_users_post**](DefaultApi.md#admin_sync_cwa_users_post) | **POST** /api/admin/users/sync-cwa | Manually sync users from Calibre-Web into users.db.
-[**admin_test_notification_preferences_post**](DefaultApi.md#admin_test_notification_preferences_post) | **POST** /api/admin/users/{user_id}/notification-preferences/test | admin_test_notification_preferences
+[**admin_test_notification_preferences_post**](DefaultApi.md#admin_test_notification_preferences_post) | **POST** /api/admin/users/{user_id}/notification-preferences/test | Send a test notification for one user
 [**admin_update_user_put**](DefaultApi.md#admin_update_user_put) | **PUT** /api/admin/users/{user_id} | Update user fields and/or settings.
 [**api_active_downloads_get**](DefaultApi.md#api_active_downloads_get) | **GET** /api/downloads/active | Get list of currently active downloads.
-[**api_activity_dismiss_many_post**](DefaultApi.md#api_activity_dismiss_many_post) | **POST** /api/activity/dismiss-many | api_activity_dismiss_many
-[**api_activity_dismiss_post**](DefaultApi.md#api_activity_dismiss_post) | **POST** /api/activity/dismiss | api_activity_dismiss
-[**api_activity_history_clear_delete**](DefaultApi.md#api_activity_history_clear_delete) | **DELETE** /api/activity/history | api_activity_history_clear
-[**api_activity_history_get**](DefaultApi.md#api_activity_history_get) | **GET** /api/activity/history | api_activity_history
-[**api_activity_snapshot_get**](DefaultApi.md#api_activity_snapshot_get) | **GET** /api/activity/snapshot | api_activity_snapshot
-[**api_admin_fulfil_request_post**](DefaultApi.md#api_admin_fulfil_request_post) | **POST** /api/admin/requests/{request_id}/fulfil | api_admin_fulfil_request
-[**api_admin_list_requests_get**](DefaultApi.md#api_admin_list_requests_get) | **GET** /api/admin/requests | api_admin_list_requests
-[**api_admin_reject_request_post**](DefaultApi.md#api_admin_reject_request_post) | **POST** /api/admin/requests/{request_id}/reject | api_admin_reject_request
-[**api_admin_request_counts_get**](DefaultApi.md#api_admin_request_counts_get) | **GET** /api/admin/requests/count | api_admin_request_counts
+[**api_activity_dismiss_many_post**](DefaultApi.md#api_activity_dismiss_many_post) | **POST** /api/activity/dismiss-many | Dismiss many activity items
+[**api_activity_dismiss_post**](DefaultApi.md#api_activity_dismiss_post) | **POST** /api/activity/dismiss | Dismiss one activity item
+[**api_activity_history_clear_delete**](DefaultApi.md#api_activity_history_clear_delete) | **DELETE** /api/activity/history | Clear activity history
+[**api_activity_history_get**](DefaultApi.md#api_activity_history_get) | **GET** /api/activity/history | List activity history
+[**api_activity_snapshot_get**](DefaultApi.md#api_activity_snapshot_get) | **GET** /api/activity/snapshot | Current activity snapshot
+[**api_admin_fulfil_request_post**](DefaultApi.md#api_admin_fulfil_request_post) | **POST** /api/admin/requests/{request_id}/fulfil | Fulfil a book request
+[**api_admin_list_requests_get**](DefaultApi.md#api_admin_list_requests_get) | **GET** /api/admin/requests | Admin list of book requests
+[**api_admin_reject_request_post**](DefaultApi.md#api_admin_reject_request_post) | **POST** /api/admin/requests/{request_id}/reject | Reject a book request
+[**api_admin_request_counts_get**](DefaultApi.md#api_admin_request_counts_get) | **GET** /api/admin/requests/count | Admin counts of pending book requests
 [**api_auth_check_get**](DefaultApi.md#api_auth_check_get) | **GET** /api/auth/check | Check if user has a valid session.
 [**api_cancel_download_delete**](DefaultApi.md#api_cancel_download_delete) | **DELETE** /api/download/{book_id}/cancel | Cancel a download.
-[**api_cancel_request_delete**](DefaultApi.md#api_cancel_request_delete) | **DELETE** /api/requests/{request_id} | api_cancel_request
+[**api_cancel_request_delete**](DefaultApi.md#api_cancel_request_delete) | **DELETE** /api/requests/{request_id} | Cancel one of the current user&#39;s requests
 [**api_config_get**](DefaultApi.md#api_config_get) | **GET** /api/config | Get application configuration for frontend.
 [**api_cover_get**](DefaultApi.md#api_cover_get) | **GET** /api/covers/{cover_id} | Serve a cached book cover image.
-[**api_create_request_post**](DefaultApi.md#api_create_request_post) | **POST** /api/requests | api_create_request
-[**api_create_requests_batch_post**](DefaultApi.md#api_create_requests_batch_post) | **POST** /api/requests/batch | api_create_requests_batch
+[**api_create_request_post**](DefaultApi.md#api_create_request_post) | **POST** /api/requests | Submit a book request
+[**api_create_requests_batch_post**](DefaultApi.md#api_create_requests_batch_post) | **POST** /api/requests/batch | Submit many book requests
 [**api_download_release_post**](DefaultApi.md#api_download_release_post) | **POST** /api/releases/download | Queue a release for download.
 [**api_health_get**](DefaultApi.md#api_health_get) | **GET** /api/health | Health check endpoint for container orchestration.
-[**api_inspect_release_post**](DefaultApi.md#api_inspect_release_post) | **POST** /api/releases/inspect | api_inspect_release
-[**api_list_requests_get**](DefaultApi.md#api_list_requests_get) | **GET** /api/requests | api_list_requests
+[**api_inspect_release_post**](DefaultApi.md#api_inspect_release_post) | **POST** /api/releases/inspect | Inspect a release before queueing a download
+[**api_list_requests_get**](DefaultApi.md#api_list_requests_get) | **GET** /api/requests | List the current user&#39;s book requests
 [**api_local_download_get**](DefaultApi.md#api_local_download_get) | **GET** /api/localdownload | Download an EPUB file from local storage if available.
 [**api_login_post**](DefaultApi.md#api_login_post) | **POST** /api/auth/login | Login endpoint that validates credentials and creates a session.
 [**api_logout_post**](DefaultApi.md#api_logout_post) | **POST** /api/auth/logout | Logout endpoint that clears the session.
@@ -59,7 +59,7 @@ Method | HTTP request | Description
 [**api_release_sources_get**](DefaultApi.md#api_release_sources_get) | **GET** /api/release-sources | Get available release sources from the plugin registry.
 [**api_releases_get**](DefaultApi.md#api_releases_get) | **GET** /api/releases | Search for downloadable releases of a book.
 [**api_reorder_queue_post**](DefaultApi.md#api_reorder_queue_post) | **POST** /api/queue/reorder | Bulk reorder queue by setting new priorities.
-[**api_request_policy_get**](DefaultApi.md#api_request_policy_get) | **GET** /api/request-policy | api_request_policy
+[**api_request_policy_get**](DefaultApi.md#api_request_policy_get) | **GET** /api/request-policy | Request policy for the current user
 [**api_retry_download_post**](DefaultApi.md#api_retry_download_post) | **POST** /api/download/{book_id}/retry | Retry a failed download.
 [**api_set_priority_put**](DefaultApi.md#api_set_priority_put) | **PUT** /api/queue/{book_id}/priority | Set priority for a queued book.
 [**api_settings_execute_action_post**](DefaultApi.md#api_settings_execute_action_post) | **POST** /api/settings/{tab_name}/action/{action_key} | Execute a settings action (e.g., test connection).
@@ -70,15 +70,15 @@ Method | HTTP request | Description
 [**oidc_callback_get**](DefaultApi.md#oidc_callback_get) | **GET** /api/auth/oidc/callback | Handle OIDC callback from identity provider.
 [**oidc_login_get**](DefaultApi.md#oidc_login_get) | **GET** /api/auth/oidc/login | Initiate OIDC login flow and redirect to the provider.
 [**openapi_json_get**](DefaultApi.md#openapi_json_get) | **GET** /openapi.json | OpenAPI 3 description of the live HTTP API.
-[**users_me_edit_context_get**](DefaultApi.md#users_me_edit_context_get) | **GET** /api/users/me/edit-context | users_me_edit_context
-[**users_me_test_notification_preferences_post**](DefaultApi.md#users_me_test_notification_preferences_post) | **POST** /api/users/me/notification-preferences/test | users_me_test_notification_preferences
-[**users_me_update_put**](DefaultApi.md#users_me_update_put) | **PUT** /api/users/me | users_me_update
+[**users_me_edit_context_get**](DefaultApi.md#users_me_edit_context_get) | **GET** /api/users/me/edit-context | Edit-form context for the current user
+[**users_me_test_notification_preferences_post**](DefaultApi.md#users_me_test_notification_preferences_post) | **POST** /api/users/me/notification-preferences/test | Send a test notification to the current user
+[**users_me_update_put**](DefaultApi.md#users_me_update_put) | **PUT** /api/users/me | Update the current user
 
 
 # **admin_booklore_options_get**
 > admin_booklore_options_get()
 
-admin_booklore_options
+List Booklore libraries for admin settings
 
 
 
@@ -103,7 +103,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # admin_booklore_options
+        # List Booklore libraries for admin settings
         await api_instance.admin_booklore_options_get()
     except Exception as e:
         print("Exception when calling DefaultApi->admin_booklore_options_get: %s\n" % e)
@@ -274,7 +274,7 @@ No authorization required
 # **admin_download_defaults_get**
 > admin_download_defaults_get()
 
-admin_download_defaults
+Default download destination for new users
 
 
 
@@ -299,7 +299,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # admin_download_defaults
+        # Default download destination for new users
         await api_instance.admin_download_defaults_get()
     except Exception as e:
         print("Exception when calling DefaultApi->admin_download_defaults_get: %s\n" % e)
@@ -338,7 +338,7 @@ No authorization required
 # **admin_get_delivery_preferences_get**
 > admin_get_delivery_preferences_get(user_id)
 
-admin_get_delivery_preferences
+Delivery preferences for one user
 
 
 
@@ -364,7 +364,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     user_id = 56 # int | 
 
     try:
-        # admin_get_delivery_preferences
+        # Delivery preferences for one user
         await api_instance.admin_get_delivery_preferences_get(user_id)
     except Exception as e:
         print("Exception when calling DefaultApi->admin_get_delivery_preferences_get: %s\n" % e)
@@ -406,7 +406,7 @@ No authorization required
 # **admin_get_effective_settings_get**
 > admin_get_effective_settings_get(user_id)
 
-admin_get_effective_settings
+Merged settings for one user
 
 
 
@@ -432,7 +432,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     user_id = 56 # int | 
 
     try:
-        # admin_get_effective_settings
+        # Merged settings for one user
         await api_instance.admin_get_effective_settings_get(user_id)
     except Exception as e:
         print("Exception when calling DefaultApi->admin_get_effective_settings_get: %s\n" % e)
@@ -474,7 +474,7 @@ No authorization required
 # **admin_get_notification_preferences_get**
 > admin_get_notification_preferences_get(user_id)
 
-admin_get_notification_preferences
+Notification preferences for one user
 
 
 
@@ -500,7 +500,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     user_id = 56 # int | 
 
     try:
-        # admin_get_notification_preferences
+        # Notification preferences for one user
         await api_instance.admin_get_notification_preferences_get(user_id)
     except Exception as e:
         print("Exception when calling DefaultApi->admin_get_notification_preferences_get: %s\n" % e)
@@ -542,7 +542,7 @@ No authorization required
 # **admin_get_search_preferences_get**
 > admin_get_search_preferences_get(user_id)
 
-admin_get_search_preferences
+Search preferences for one user
 
 
 
@@ -568,7 +568,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     user_id = 56 # int | 
 
     try:
-        # admin_get_search_preferences
+        # Search preferences for one user
         await api_instance.admin_get_search_preferences_get(user_id)
     except Exception as e:
         print("Exception when calling DefaultApi->admin_get_search_preferences_get: %s\n" % e)
@@ -742,7 +742,7 @@ No authorization required
 # **admin_settings_overrides_summary_get**
 > admin_settings_overrides_summary_get()
 
-admin_settings_overrides_summary
+Summary of per-user settings overrides
 
 
 
@@ -767,7 +767,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # admin_settings_overrides_summary
+        # Summary of per-user settings overrides
         await api_instance.admin_settings_overrides_summary_get()
     except Exception as e:
         print("Exception when calling DefaultApi->admin_settings_overrides_summary_get: %s\n" % e)
@@ -870,7 +870,7 @@ No authorization required
 # **admin_test_notification_preferences_post**
 > admin_test_notification_preferences_post(user_id)
 
-admin_test_notification_preferences
+Send a test notification for one user
 
 
 
@@ -896,7 +896,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     user_id = 56 # int | 
 
     try:
-        # admin_test_notification_preferences
+        # Send a test notification for one user
         await api_instance.admin_test_notification_preferences_post(user_id)
     except Exception as e:
         print("Exception when calling DefaultApi->admin_test_notification_preferences_post: %s\n" % e)
@@ -1073,7 +1073,7 @@ No authorization required
 # **api_activity_dismiss_many_post**
 > api_activity_dismiss_many_post()
 
-api_activity_dismiss_many
+Dismiss many activity items
 
 
 
@@ -1098,7 +1098,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_activity_dismiss_many
+        # Dismiss many activity items
         await api_instance.api_activity_dismiss_many_post()
     except Exception as e:
         print("Exception when calling DefaultApi->api_activity_dismiss_many_post: %s\n" % e)
@@ -1137,7 +1137,7 @@ No authorization required
 # **api_activity_dismiss_post**
 > api_activity_dismiss_post()
 
-api_activity_dismiss
+Dismiss one activity item
 
 
 
@@ -1162,7 +1162,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_activity_dismiss
+        # Dismiss one activity item
         await api_instance.api_activity_dismiss_post()
     except Exception as e:
         print("Exception when calling DefaultApi->api_activity_dismiss_post: %s\n" % e)
@@ -1201,7 +1201,7 @@ No authorization required
 # **api_activity_history_clear_delete**
 > api_activity_history_clear_delete()
 
-api_activity_history_clear
+Clear activity history
 
 
 
@@ -1226,7 +1226,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_activity_history_clear
+        # Clear activity history
         await api_instance.api_activity_history_clear_delete()
     except Exception as e:
         print("Exception when calling DefaultApi->api_activity_history_clear_delete: %s\n" % e)
@@ -1265,7 +1265,7 @@ No authorization required
 # **api_activity_history_get**
 > api_activity_history_get()
 
-api_activity_history
+List activity history
 
 
 
@@ -1290,7 +1290,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_activity_history
+        # List activity history
         await api_instance.api_activity_history_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_activity_history_get: %s\n" % e)
@@ -1329,7 +1329,7 @@ No authorization required
 # **api_activity_snapshot_get**
 > api_activity_snapshot_get()
 
-api_activity_snapshot
+Current activity snapshot
 
 
 
@@ -1354,7 +1354,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_activity_snapshot
+        # Current activity snapshot
         await api_instance.api_activity_snapshot_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_activity_snapshot_get: %s\n" % e)
@@ -1393,7 +1393,7 @@ No authorization required
 # **api_admin_fulfil_request_post**
 > api_admin_fulfil_request_post(request_id)
 
-api_admin_fulfil_request
+Fulfil a book request
 
 
 
@@ -1419,7 +1419,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     request_id = 56 # int | 
 
     try:
-        # api_admin_fulfil_request
+        # Fulfil a book request
         await api_instance.api_admin_fulfil_request_post(request_id)
     except Exception as e:
         print("Exception when calling DefaultApi->api_admin_fulfil_request_post: %s\n" % e)
@@ -1461,7 +1461,7 @@ No authorization required
 # **api_admin_list_requests_get**
 > api_admin_list_requests_get()
 
-api_admin_list_requests
+Admin list of book requests
 
 
 
@@ -1486,7 +1486,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_admin_list_requests
+        # Admin list of book requests
         await api_instance.api_admin_list_requests_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_admin_list_requests_get: %s\n" % e)
@@ -1525,7 +1525,7 @@ No authorization required
 # **api_admin_reject_request_post**
 > api_admin_reject_request_post(request_id)
 
-api_admin_reject_request
+Reject a book request
 
 
 
@@ -1551,7 +1551,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     request_id = 56 # int | 
 
     try:
-        # api_admin_reject_request
+        # Reject a book request
         await api_instance.api_admin_reject_request_post(request_id)
     except Exception as e:
         print("Exception when calling DefaultApi->api_admin_reject_request_post: %s\n" % e)
@@ -1593,7 +1593,7 @@ No authorization required
 # **api_admin_request_counts_get**
 > api_admin_request_counts_get()
 
-api_admin_request_counts
+Admin counts of pending book requests
 
 
 
@@ -1618,7 +1618,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_admin_request_counts
+        # Admin counts of pending book requests
         await api_instance.api_admin_request_counts_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_admin_request_counts_get: %s\n" % e)
@@ -1799,7 +1799,7 @@ No authorization required
 # **api_cancel_request_delete**
 > api_cancel_request_delete(request_id)
 
-api_cancel_request
+Cancel one of the current user's requests
 
 
 
@@ -1825,7 +1825,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     request_id = 56 # int | 
 
     try:
-        # api_cancel_request
+        # Cancel one of the current user's requests
         await api_instance.api_cancel_request_delete(request_id)
     except Exception as e:
         print("Exception when calling DefaultApi->api_cancel_request_delete: %s\n" % e)
@@ -2016,7 +2016,7 @@ No authorization required
 # **api_create_request_post**
 > api_create_request_post()
 
-api_create_request
+Submit a book request
 
 
 
@@ -2041,7 +2041,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_create_request
+        # Submit a book request
         await api_instance.api_create_request_post()
     except Exception as e:
         print("Exception when calling DefaultApi->api_create_request_post: %s\n" % e)
@@ -2080,7 +2080,7 @@ No authorization required
 # **api_create_requests_batch_post**
 > api_create_requests_batch_post()
 
-api_create_requests_batch
+Submit many book requests
 
 
 
@@ -2105,7 +2105,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_create_requests_batch
+        # Submit many book requests
         await api_instance.api_create_requests_batch_post()
     except Exception as e:
         print("Exception when calling DefaultApi->api_create_requests_batch_post: %s\n" % e)
@@ -2296,7 +2296,7 @@ No authorization required
 # **api_inspect_release_post**
 > api_inspect_release_post()
 
-api_inspect_release
+Inspect a release before queueing a download
 
 
 
@@ -2321,7 +2321,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_inspect_release
+        # Inspect a release before queueing a download
         await api_instance.api_inspect_release_post()
     except Exception as e:
         print("Exception when calling DefaultApi->api_inspect_release_post: %s\n" % e)
@@ -2360,7 +2360,7 @@ No authorization required
 # **api_list_requests_get**
 > api_list_requests_get()
 
-api_list_requests
+List the current user's book requests
 
 
 
@@ -2385,7 +2385,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_list_requests
+        # List the current user's book requests
         await api_instance.api_list_requests_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_list_requests_get: %s\n" % e)
@@ -3854,7 +3854,7 @@ No authorization required
 # **api_request_policy_get**
 > api_request_policy_get()
 
-api_request_policy
+Request policy for the current user
 
 
 
@@ -3879,7 +3879,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # api_request_policy
+        # Request policy for the current user
         await api_instance.api_request_policy_get()
     except Exception as e:
         print("Exception when calling DefaultApi->api_request_policy_get: %s\n" % e)
@@ -4622,7 +4622,7 @@ No authorization required
 # **users_me_edit_context_get**
 > users_me_edit_context_get()
 
-users_me_edit_context
+Edit-form context for the current user
 
 
 
@@ -4647,7 +4647,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # users_me_edit_context
+        # Edit-form context for the current user
         await api_instance.users_me_edit_context_get()
     except Exception as e:
         print("Exception when calling DefaultApi->users_me_edit_context_get: %s\n" % e)
@@ -4686,7 +4686,7 @@ No authorization required
 # **users_me_test_notification_preferences_post**
 > users_me_test_notification_preferences_post()
 
-users_me_test_notification_preferences
+Send a test notification to the current user
 
 
 
@@ -4711,7 +4711,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # users_me_test_notification_preferences
+        # Send a test notification to the current user
         await api_instance.users_me_test_notification_preferences_post()
     except Exception as e:
         print("Exception when calling DefaultApi->users_me_test_notification_preferences_post: %s\n" % e)
@@ -4750,7 +4750,7 @@ No authorization required
 # **users_me_update_put**
 > users_me_update_put()
 
-users_me_update
+Update the current user
 
 
 
@@ -4775,7 +4775,7 @@ async with shelfmark_client.ApiClient(configuration) as api_client:
     api_instance = shelfmark_client.DefaultApi(api_client)
 
     try:
-        # users_me_update
+        # Update the current user
         await api_instance.users_me_update_put()
     except Exception as e:
         print("Exception when calling DefaultApi->users_me_update_put: %s\n" % e)

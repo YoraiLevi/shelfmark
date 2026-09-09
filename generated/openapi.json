@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Shelfmark API",
-    "version": "0.1.0",
+    "version": "1.3.15",
     "description": "HTTP API for the running Shelfmark instance. Generated from Flask routes. There is no separate published spec. GET /openapi.json and GET /api/openapi.json are unauthenticated. Most other /api/* routes use login_required when authentication is enabled. ISBN metadata search is GET /api/metadata/search?query=; the handler does not accept search_type. ISBN file search is GET /api/releases with isbn= and source=direct_download."
   },
   "servers": [
@@ -211,7 +211,7 @@
     "/api/admin/download-defaults": {
       "get": {
         "operationId": "admin_download_defaults_get",
-        "summary": "admin_download_defaults",
+        "summary": "Default download destination for new users",
         "description": "",
         "parameters": [],
         "responses": {
@@ -233,7 +233,7 @@
     "/api/admin/booklore-options": {
       "get": {
         "operationId": "admin_booklore_options_get",
-        "summary": "admin_booklore_options",
+        "summary": "List Booklore libraries for admin settings",
         "description": "",
         "parameters": [],
         "responses": {
@@ -255,7 +255,7 @@
     "/api/admin/users/{user_id}/delivery-preferences": {
       "get": {
         "operationId": "admin_get_delivery_preferences_get",
-        "summary": "admin_get_delivery_preferences",
+        "summary": "Delivery preferences for one user",
         "description": "",
         "parameters": [
           {
@@ -286,7 +286,7 @@
     "/api/admin/users/{user_id}/search-preferences": {
       "get": {
         "operationId": "admin_get_search_preferences_get",
-        "summary": "admin_get_search_preferences",
+        "summary": "Search preferences for one user",
         "description": "",
         "parameters": [
           {
@@ -317,7 +317,7 @@
     "/api/admin/users/{user_id}/notification-preferences": {
       "get": {
         "operationId": "admin_get_notification_preferences_get",
-        "summary": "admin_get_notification_preferences",
+        "summary": "Notification preferences for one user",
         "description": "",
         "parameters": [
           {
@@ -348,7 +348,7 @@
     "/api/admin/users/{user_id}/notification-preferences/test": {
       "post": {
         "operationId": "admin_test_notification_preferences_post",
-        "summary": "admin_test_notification_preferences",
+        "summary": "Send a test notification for one user",
         "description": "",
         "parameters": [
           {
@@ -379,7 +379,7 @@
     "/api/admin/settings/overrides-summary": {
       "get": {
         "operationId": "admin_settings_overrides_summary_get",
-        "summary": "admin_settings_overrides_summary",
+        "summary": "Summary of per-user settings overrides",
         "description": "",
         "parameters": [],
         "responses": {
@@ -401,7 +401,7 @@
     "/api/admin/users/{user_id}/effective-settings": {
       "get": {
         "operationId": "admin_get_effective_settings_get",
-        "summary": "admin_get_effective_settings",
+        "summary": "Merged settings for one user",
         "description": "",
         "parameters": [
           {
@@ -432,7 +432,7 @@
     "/api/users/me/edit-context": {
       "get": {
         "operationId": "users_me_edit_context_get",
-        "summary": "users_me_edit_context",
+        "summary": "Edit-form context for the current user",
         "description": "",
         "parameters": [],
         "responses": {
@@ -454,7 +454,7 @@
     "/api/users/me/notification-preferences/test": {
       "post": {
         "operationId": "users_me_test_notification_preferences_post",
-        "summary": "users_me_test_notification_preferences",
+        "summary": "Send a test notification to the current user",
         "description": "",
         "parameters": [],
         "responses": {
@@ -476,7 +476,7 @@
     "/api/users/me": {
       "put": {
         "operationId": "users_me_update_put",
-        "summary": "users_me_update",
+        "summary": "Update the current user",
         "description": "",
         "parameters": [],
         "responses": {
@@ -498,7 +498,7 @@
     "/api/request-policy": {
       "get": {
         "operationId": "api_request_policy_get",
-        "summary": "api_request_policy",
+        "summary": "Request policy for the current user",
         "description": "",
         "parameters": [],
         "responses": {
@@ -520,7 +520,7 @@
     "/api/requests": {
       "post": {
         "operationId": "api_create_request_post",
-        "summary": "api_create_request",
+        "summary": "Submit a book request",
         "description": "",
         "parameters": [],
         "responses": {
@@ -540,7 +540,7 @@
       },
       "get": {
         "operationId": "api_list_requests_get",
-        "summary": "api_list_requests",
+        "summary": "List the current user's book requests",
         "description": "",
         "parameters": [],
         "responses": {
@@ -562,7 +562,7 @@
     "/api/requests/batch": {
       "post": {
         "operationId": "api_create_requests_batch_post",
-        "summary": "api_create_requests_batch",
+        "summary": "Submit many book requests",
         "description": "",
         "parameters": [],
         "responses": {
@@ -584,7 +584,7 @@
     "/api/requests/{request_id}": {
       "delete": {
         "operationId": "api_cancel_request_delete",
-        "summary": "api_cancel_request",
+        "summary": "Cancel one of the current user's requests",
         "description": "",
         "parameters": [
           {
@@ -615,7 +615,7 @@
     "/api/admin/requests": {
       "get": {
         "operationId": "api_admin_list_requests_get",
-        "summary": "api_admin_list_requests",
+        "summary": "Admin list of book requests",
         "description": "",
         "parameters": [],
         "responses": {
@@ -637,7 +637,7 @@
     "/api/admin/requests/count": {
       "get": {
         "operationId": "api_admin_request_counts_get",
-        "summary": "api_admin_request_counts",
+        "summary": "Admin counts of pending book requests",
         "description": "",
         "parameters": [],
         "responses": {
@@ -659,7 +659,7 @@
     "/api/admin/requests/{request_id}/fulfil": {
       "post": {
         "operationId": "api_admin_fulfil_request_post",
-        "summary": "api_admin_fulfil_request",
+        "summary": "Fulfil a book request",
         "description": "",
         "parameters": [
           {
@@ -690,7 +690,7 @@
     "/api/admin/requests/{request_id}/reject": {
       "post": {
         "operationId": "api_admin_reject_request_post",
-        "summary": "api_admin_reject_request",
+        "summary": "Reject a book request",
         "description": "",
         "parameters": [
           {
@@ -721,7 +721,7 @@
     "/api/activity/snapshot": {
       "get": {
         "operationId": "api_activity_snapshot_get",
-        "summary": "api_activity_snapshot",
+        "summary": "Current activity snapshot",
         "description": "",
         "parameters": [],
         "responses": {
@@ -743,7 +743,7 @@
     "/api/activity/dismiss": {
       "post": {
         "operationId": "api_activity_dismiss_post",
-        "summary": "api_activity_dismiss",
+        "summary": "Dismiss one activity item",
         "description": "",
         "parameters": [],
         "responses": {
@@ -765,7 +765,7 @@
     "/api/activity/dismiss-many": {
       "post": {
         "operationId": "api_activity_dismiss_many_post",
-        "summary": "api_activity_dismiss_many",
+        "summary": "Dismiss many activity items",
         "description": "",
         "parameters": [],
         "responses": {
@@ -787,7 +787,7 @@
     "/api/activity/history": {
       "get": {
         "operationId": "api_activity_history_get",
-        "summary": "api_activity_history",
+        "summary": "List activity history",
         "description": "",
         "parameters": [],
         "responses": {
@@ -807,7 +807,7 @@
       },
       "delete": {
         "operationId": "api_activity_history_clear_delete",
-        "summary": "api_activity_history_clear",
+        "summary": "Clear activity history",
         "description": "",
         "parameters": [],
         "responses": {
@@ -829,7 +829,7 @@
     "/api/releases/inspect": {
       "post": {
         "operationId": "api_inspect_release_post",
-        "summary": "api_inspect_release",
+        "summary": "Inspect a release before queueing a download",
         "description": "",
         "parameters": [],
         "responses": {
