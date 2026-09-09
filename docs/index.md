@@ -15,6 +15,7 @@ Use the guides below to set up the app, connect your library tools, and understa
 - [Users & Requests](users-and-requests.md)
 - [HTTP API](api.md)
 - [Fork Additions](fork.md)
+- [shelfmark-dl CLI](cli.md)
 - [Reverse Proxy](reverse-proxy.md)
 - [OIDC](oidc.md)
 - [URL Search Parameters](url-search-parameters.md)
