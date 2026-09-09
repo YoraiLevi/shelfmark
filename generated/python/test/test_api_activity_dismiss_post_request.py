@@ -14,10 +14,10 @@
 
 import unittest
 
-from shelfmark_client.models.api_download_release_post_request import ApiDownloadReleasePostRequest
+from shelfmark_client.models.api_activity_dismiss_post_request import ApiActivityDismissPostRequest
 
-class TestApiDownloadReleasePostRequest(unittest.TestCase):
-    """ApiDownloadReleasePostRequest unit test stubs"""
+class TestApiActivityDismissPostRequest(unittest.TestCase):
+    """ApiActivityDismissPostRequest unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,34 +25,28 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> ApiDownloadReleasePostRequest:
-        """Test ApiDownloadReleasePostRequest
+    def make_instance(self, include_optional) -> ApiActivityDismissPostRequest:
+        """Test ApiActivityDismissPostRequest
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiDownloadReleasePostRequest`
+        # uncomment below to create an instance of `ApiActivityDismissPostRequest`
         """
-        model = ApiDownloadReleasePostRequest()
+        model = ApiActivityDismissPostRequest()
         if include_optional:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
-                format = '',
-                size = '',
-                extra = { },
-                priority = 56
+            return ApiActivityDismissPostRequest(
+                item_type = '',
+                item_key = ''
             )
         else:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
+            return ApiActivityDismissPostRequest(
+                item_type = '',
+                item_key = '',
         )
         """
 
-    def testApiDownloadReleasePostRequest(self):
-        """Test ApiDownloadReleasePostRequest"""
+    def testApiActivityDismissPostRequest(self):
+        """Test ApiActivityDismissPostRequest"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

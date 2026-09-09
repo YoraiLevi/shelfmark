@@ -14,10 +14,10 @@
 
 import unittest
 
-from shelfmark_client.models.api_download_release_post_request import ApiDownloadReleasePostRequest
+from shelfmark_client.models.api_inspect_release_post_request import ApiInspectReleasePostRequest
 
-class TestApiDownloadReleasePostRequest(unittest.TestCase):
-    """ApiDownloadReleasePostRequest unit test stubs"""
+class TestApiInspectReleasePostRequest(unittest.TestCase):
+    """ApiInspectReleasePostRequest unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,34 +25,28 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> ApiDownloadReleasePostRequest:
-        """Test ApiDownloadReleasePostRequest
+    def make_instance(self, include_optional) -> ApiInspectReleasePostRequest:
+        """Test ApiInspectReleasePostRequest
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiDownloadReleasePostRequest`
+        # uncomment below to create an instance of `ApiInspectReleasePostRequest`
         """
-        model = ApiDownloadReleasePostRequest()
+        model = ApiInspectReleasePostRequest()
         if include_optional:
-            return ApiDownloadReleasePostRequest(
+            return ApiInspectReleasePostRequest(
                 source = '',
-                source_id = '',
-                title = '',
-                format = '',
-                size = '',
-                extra = { },
-                priority = 56
+                source_id = ''
             )
         else:
-            return ApiDownloadReleasePostRequest(
+            return ApiInspectReleasePostRequest(
                 source = '',
                 source_id = '',
-                title = '',
         )
         """
 
-    def testApiDownloadReleasePostRequest(self):
-        """Test ApiDownloadReleasePostRequest"""
+    def testApiInspectReleasePostRequest(self):
+        """Test ApiInspectReleasePostRequest"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

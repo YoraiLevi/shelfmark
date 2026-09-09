@@ -88,6 +88,13 @@ def register_release_inspect_routes(
     @app.route("/api/releases/inspect", methods=["POST"])
     @login_required
     def api_inspect_release() -> Response | tuple[Response, int]:
+        """Inspect a release before queueing a download.
+
+        Request Body (JSON):
+            source (str): Release source name (required)
+            source_id (str): ID within the source (required)
+        """
+
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
             return jsonify({"error": "No data provided"}), 400

@@ -1052,6 +1052,7 @@ def api_download_release() -> Response | tuple[Response, int]:
         format (str, optional): File format
         size (str, optional): Human-readable size
         extra (dict, optional): Additional metadata
+        priority (int, optional): Queue priority, lower is sooner
 
     Returns:
         flask.Response: JSON status object indicating success or failure.

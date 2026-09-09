@@ -25,6 +25,10 @@ _PYTHON_TO_OPENAPI = {
     "integer": "integer",
     "number": "number",
     "boolean": "boolean",
+    "dict": "object",
+    "object": "object",
+    "list": "array",
+    "array": "array",
 }
 _CONVERTER_TO_OPENAPI = {
     "int": "integer",
@@ -126,31 +130,6 @@ _EXTRA_QUERY_PARAMETERS: dict[str, list[dict[str, Any]]] = {
     ],
 }
 
-_REQUEST_BODIES: dict[tuple[str, str], dict[str, Any]] = {
-    ("/api/releases/download", "post"): {
-        "required": True,
-        "content": {
-            "application/json": {
-                "schema": {
-                    "type": "object",
-                    "required": ["source", "source_id"],
-                    "properties": {
-                        "source": {"type": "string", "description": "Release source name."},
-                        "source_id": {
-                            "type": "string",
-                            "description": "ID within the source, such as an MD5.",
-                        },
-                        "title": {"type": "string"},
-                        "format": {"type": "string"},
-                        "size": {"type": "string"},
-                        "extra": {"type": "object"},
-                        "priority": {"type": "integer", "default": 0},
-                    },
-                }
-            }
-        },
-    },
-}
 
 
 def flask_rule_to_openapi_path(rule: str) -> str:
@@ -179,10 +158,10 @@ def query_parameters_from_docstring(doc: str) -> list[dict[str, Any]]:
     if marker not in doc:
         return []
     section = doc.split(marker, 1)[1]
-    if "\n    Returns:" in section:
-        section = section.split("\n    Returns:", 1)[0]
-    elif "\nReturns:" in section:
-        section = section.split("\nReturns:", 1)[0]
+    for stop in ("\n    Request Body", "\nRequest Body", "\n    Returns:", "\nReturns:"):
+        if stop in section:
+            section = section.split(stop, 1)[0]
+            break
 
     parameters: list[dict[str, Any]] = []
     for match in _QUERY_LINE.finditer(section):
@@ -191,18 +170,68 @@ def query_parameters_from_docstring(doc: str) -> list[dict[str, Any]]:
             continue
         raw_type = (match.group("type") or "string").strip().lower()
         description = match.group("desc").strip()
-        lowered = description.lower()
-        required = "required" in lowered and "optional" not in lowered
+        type_parts = [part.strip() for part in raw_type.split(",") if part.strip()]
+        base_type = type_parts[0] if type_parts else "string"
+        required = "required" in description.lower() and "optional" not in description.lower()
         parameters.append(
             {
                 "name": name,
                 "in": "query",
                 "required": required,
-                "schema": {"type": _PYTHON_TO_OPENAPI.get(raw_type, "string")},
+                "schema": {"type": _PYTHON_TO_OPENAPI.get(base_type, "string")},
                 "description": description,
             }
         )
     return parameters
+
+
+def request_body_from_docstring(doc: str) -> dict[str, Any] | None:
+    """Parse a Google-style Request Body section into an OpenAPI requestBody."""
+    marker = None
+    optional = False
+    for candidate in ("Request Body (JSON):", "Request Body (optional):", "Request Body:"):
+        if candidate in doc:
+            marker = candidate
+            optional = "optional" in candidate.lower()
+            break
+    if marker is None:
+        return None
+    section = doc.split(marker, 1)[1]
+    for stop in ("\n    Returns:", "\nReturns:"):
+        if stop in section:
+            section = section.split(stop, 1)[0]
+            break
+
+    properties: dict[str, Any] = {}
+    required: list[str] = []
+    for match in _QUERY_LINE.finditer(section):
+        name = match.group("name")
+        raw_type = (match.group("type") or "string").strip().lower()
+        description = match.group("desc").strip()
+        type_parts = [part.strip() for part in raw_type.split(",") if part.strip()]
+        base_type = type_parts[0] if type_parts else "string"
+        is_optional = "optional" in type_parts or "optional" in description.lower()
+        schema: dict[str, Any] = {"type": _PYTHON_TO_OPENAPI.get(base_type, "string")}
+        if schema["type"] == "object":
+            schema["additionalProperties"] = True
+        elif schema["type"] == "array":
+            schema["items"] = {"type": "object", "additionalProperties": True}
+        if description:
+            schema["description"] = description
+        properties[name] = schema
+        if not is_optional:
+            required.append(name)
+
+    if not properties:
+        schema = {"type": "object", "additionalProperties": True}
+    else:
+        schema = {"type": "object", "properties": properties}
+        if required:
+            schema["required"] = required
+    return {
+        "required": not optional,
+        "content": {"application/json": {"schema": schema}},
+    }
 
 
 def _merge_parameters(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -219,42 +248,9 @@ def _should_include_rule(rule: str) -> bool:
     return rule.startswith("/api/")
 
 
-_ENDPOINT_SUMMARIES: dict[str, str] = {
-    "api_activity_dismiss": "Dismiss one activity item",
-    "api_activity_dismiss_many": "Dismiss many activity items",
-    "api_activity_history": "List activity history",
-    "api_activity_history_clear": "Clear activity history",
-    "api_activity_snapshot": "Current activity snapshot",
-    "admin_booklore_options": "List Booklore libraries for admin settings",
-    "admin_download_defaults": "Default download destination for new users",
-    "api_admin_list_requests": "Admin list of book requests",
-    "api_admin_request_counts": "Admin counts of pending book requests",
-    "admin_settings_overrides_summary": "Summary of per-user settings overrides",
-    "admin_get_delivery_preferences": "Delivery preferences for one user",
-    "admin_get_effective_settings": "Merged settings for one user",
-    "admin_get_notification_preferences": "Notification preferences for one user",
-    "admin_get_search_preferences": "Search preferences for one user",
-    "admin_test_notification_preferences": "Send a test notification for one user",
-    "api_request_policy": "Request policy for the current user",
-    "api_list_requests": "List the current user's book requests",
-    "api_create_request": "Submit a book request",
-    "api_create_requests_batch": "Submit many book requests",
-    "api_cancel_request": "Cancel one of the current user's requests",
-    "api_inspect_release": "Inspect a release before queueing a download",
-    "users_me_edit_context": "Edit-form context for the current user",
-    "users_me_test_notification_preferences": "Send a test notification to the current user",
-    "users_me_update": "Update the current user",
-    "api_admin_fulfil_request": "Fulfil a book request",
-    "api_admin_reject_request": "Reject a book request",
-}
-
-
-def _human_summary(endpoint: str, doc: str) -> str:
-    """Prefer a real sentence over a bare function name."""
+def _operation_summary(endpoint: str, doc: str) -> str:
     first = doc.split("\n", 1)[0].strip() if doc else ""
-    if first and " " in first:
-        return first
-    return _ENDPOINT_SUMMARIES.get(endpoint, first or endpoint)
+    return first or endpoint
 
 
 def build_openapi_spec(app: Flask) -> dict[str, Any]:
@@ -269,7 +265,7 @@ def build_openapi_spec(app: Flask) -> dict[str, Any]:
 
         view = app.view_functions.get(rule.endpoint)
         doc = inspect.getdoc(view) or ""
-        summary = _human_summary(rule.endpoint, doc)
+        summary = _operation_summary(rule.endpoint, doc)
         openapi_path = flask_rule_to_openapi_path(rule.rule)
         parameters = _merge_parameters(
             _path_parameters(rule.rule),
@@ -290,7 +286,7 @@ def build_openapi_spec(app: Flask) -> dict[str, Any]:
                     "404": {"description": "Not found"},
                 },
             }
-            request_body = _REQUEST_BODIES.get((rule.rule, method.lower()))
+            request_body = request_body_from_docstring(doc)
             if request_body is not None:
                 operation["requestBody"] = request_body
             item[method.lower()] = operation

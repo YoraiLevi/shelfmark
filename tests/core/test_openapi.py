@@ -13,6 +13,7 @@ from shelfmark.core.openapi import (
     flask_rule_to_openapi_path,
     query_parameters_from_docstring,
     register_openapi_routes,
+    request_body_from_docstring,
 )
 
 
@@ -67,27 +68,56 @@ def test_build_openapi_spec_includes_api_routes_only() -> None:
 
 
 
-def test_human_summary_replaces_identifier_docstrings() -> None:
+def test_request_body_from_docstring_marks_optional_fields() -> None:
+    doc = """Login.
+
+    Request Body (JSON):
+        username (str): Username
+        password (str): Password
+        remember_me (bool, optional): Extend the session
+    """
+    body = request_body_from_docstring(doc)
+    assert body is not None
+    schema = body["content"]["application/json"]["schema"]
+    assert schema["required"] == ["username", "password"]
+    assert schema["properties"]["remember_me"]["type"] == "boolean"
+    list_doc = """Batch.
+
+    Request Body (JSON):
+        requests (list): Request objects (required)
+    """
+    list_schema = request_body_from_docstring(list_doc)["content"]["application/json"]["schema"]
+    assert list_schema["properties"]["requests"]["type"] == "array"
+    assert "items" in list_schema["properties"]["requests"]
+
+
+def test_operation_summary_uses_handler_docstring() -> None:
     app = Flask(__name__)
 
     @app.route("/api/activity/dismiss", methods=["POST"])
     def api_activity_dismiss() -> str:
-        """api_activity_dismiss"""
+        """Dismiss one activity item."""
         return "ok"
 
     spec = build_openapi_spec(app)
     assert spec["paths"]["/api/activity/dismiss"]["post"]["summary"] == (
-        "Dismiss one activity item"
+        "Dismiss one activity item."
     )
 
 
-def test_download_release_has_json_request_body(main_module) -> None:
+def test_download_and_login_have_json_request_bodies(main_module) -> None:
     spec = build_openapi_spec(main_module.app)
-    body = spec["paths"]["/api/releases/download"]["post"]["requestBody"]
-    props = body["content"]["application/json"]["schema"]["properties"]
+    download = spec["paths"]["/api/releases/download"]["post"]["requestBody"]
+    props = download["content"]["application/json"]["schema"]["properties"]
     assert "source" in props
     assert "source_id" in props
     assert "title" in props
+    login = spec["paths"]["/api/auth/login"]["post"]["requestBody"]
+    login_props = login["content"]["application/json"]["schema"]["properties"]
+    assert "username" in login_props
+    assert "password" in login_props
+    requests_body = spec["paths"]["/api/requests"]["post"]["requestBody"]
+    assert "book_data" in requests_body["content"]["application/json"]["schema"]["properties"]
 
 @pytest.fixture(scope="module")
 def main_module():

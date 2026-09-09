@@ -5,13 +5,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**source** | **str** | Release source name. | 
-**source_id** | **str** | ID within the source, such as an MD5. | 
-**title** | **str** |  | [optional] 
-**format** | **str** |  | [optional] 
-**size** | **str** |  | [optional] 
-**extra** | **object** |  | [optional] 
-**priority** | **int** |  | [optional] [default to 0]
+**source** | **str** | Release source (e.g., \&quot;direct_download\&quot;) | 
+**source_id** | **str** | ID within the source (e.g., AA MD5 hash) | 
+**title** | **str** | Book title | 
+**format** | **str** | File format | [optional] 
+**size** | **str** | Human-readable size | [optional] 
+**extra** | **Dict[str, object]** | Additional metadata | [optional] 
+**priority** | **int** | Queue priority, lower is sooner | [optional] 
 
 ## Example
 

@@ -86,7 +86,7 @@ uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.gi
 Pin a commit or tag instead of `main` when you want a frozen client:
 
 ```bash
-uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@v1.3.15#subdirectory=generated/python"
+uv add "shelfmark-client @ git+https://github.com/<github-username>/shelfmark.git@<tag-or-commit-sha>#subdirectory=generated/python"
 ```
 
 
@@ -102,7 +102,13 @@ On this workstation the node writes under `C:\Users\devic\.services\data\shelfma
 import asyncio
 from pathlib import Path
 
-from shelfmark_client import ApiClient, ApiDownloadReleasePostRequest, Configuration, DefaultApi
+from shelfmark_client import (
+    ApiClient,
+    ApiDownloadReleasePostRequest,
+    ApiLoginPostRequest,
+    Configuration,
+    DefaultApi,
+)
 
 HOST = "http://localhost:8084"
 NODE_BOOKS = Path(r"C:\Users\devic\.services\data\shelfmark\books")
@@ -191,7 +197,7 @@ if __name__ == "__main__":
 
 `api_download_release_post` queues work on the **node**. It does not stream the file to the caller. Copy from `data/shelfmark/books` or `/api/localdownload` after the queue reports completion.
 
-When `AUTH_METHOD` is not `none`, call `api_login_post` first and reuse the `ApiClient` cookie jar.
+When `AUTH_METHOD` is not `none`, call `api_login_post(api_login_post_request=ApiLoginPostRequest(username=..., password=...))` first and reuse the `ApiClient` cookie jar.
 
 ## Every HTTP Endpoint
 

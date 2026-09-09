@@ -17,23 +17,18 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApiDownloadReleasePostRequest(BaseModel):
+class ApiActivityDismissPostRequest(BaseModel):
     """
-    ApiDownloadReleasePostRequest
+    ApiActivityDismissPostRequest
     """ # noqa: E501
-    source: StrictStr = Field(description="Release source (e.g., \"direct_download\")")
-    source_id: StrictStr = Field(description="ID within the source (e.g., AA MD5 hash)")
-    title: StrictStr = Field(description="Book title")
-    format: Optional[StrictStr] = Field(default=None, description="File format")
-    size: Optional[StrictStr] = Field(default=None, description="Human-readable size")
-    extra: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
-    priority: Optional[StrictInt] = Field(default=None, description="Queue priority, lower is sooner")
-    __properties: ClassVar[List[str]] = ["source", "source_id", "title", "format", "size", "extra", "priority"]
+    item_type: StrictStr = Field(description="Item kind such as download or request (required)")
+    item_key: StrictStr = Field(description="Dismiss key such as download:<task_id> (required)")
+    __properties: ClassVar[List[str]] = ["item_type", "item_key"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +48,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiDownloadReleasePostRequest from a JSON string"""
+        """Create an instance of ApiActivityDismissPostRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,7 +73,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiDownloadReleasePostRequest from a dict"""
+        """Create an instance of ApiActivityDismissPostRequest from a dict"""
         if obj is None:
             return None
 
@@ -86,13 +81,8 @@ class ApiDownloadReleasePostRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source"),
-            "source_id": obj.get("source_id"),
-            "title": obj.get("title"),
-            "format": obj.get("format"),
-            "size": obj.get("size"),
-            "extra": obj.get("extra"),
-            "priority": obj.get("priority")
+            "item_type": obj.get("item_type"),
+            "item_key": obj.get("item_key")
         })
         return _obj
 

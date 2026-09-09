@@ -6,7 +6,13 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 run_python() {
-  if command -v uv >/dev/null 2>&1; then
+  if [[ -n "${PYTHON_BIN:-}" ]]; then
+    "$PYTHON_BIN" "$@"
+  elif [[ -x "$ROOT/.venv/bin/python" ]]; then
+    "$ROOT/.venv/bin/python" "$@"
+  elif [[ -x "$ROOT/.venv/Scripts/python.exe" ]]; then
+    "$ROOT/.venv/Scripts/python.exe" "$@"
+  elif command -v uv >/dev/null 2>&1; then
     uv run python "$@"
   elif command -v python3 >/dev/null 2>&1; then
     python3 "$@"
@@ -35,6 +41,14 @@ GIT_USER_ID="$(origin_owner_repo | awk 'NR==1' | tr -d '\r')"
 GIT_REPO_ID="$(origin_owner_repo | awk 'NR==2' | tr -d '\r')"
 GIT_REPO_ID="${GIT_REPO_ID:-shelfmark}"
 
+if [[ "${GITHUB_REF:-}" == refs/tags/v* ]]; then
+  RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+else
+  RELEASE_VERSION="$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' | tr -d '\r' || true)"
+  RELEASE_VERSION="${RELEASE_VERSION:-0.1.0}"
+fi
+export RELEASE_VERSION
+
 run_python scripts/export_openapi.py
 
 SPEC_VERSION="$(run_python -c "import json; print(json.load(open('generated/openapi.json', encoding='utf-8'))['info']['version'].lstrip('v'))" | tr -d '\r')"
@@ -50,8 +64,13 @@ RUNTIME="${CONTAINER_RUNTIME:-}"
 if [[ -z "$RUNTIME" ]]; then
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     RUNTIME=docker
-  else
+  elif command -v podman >/dev/null 2>&1; then
     RUNTIME=podman
+  elif command -v podman.exe >/dev/null 2>&1; then
+    RUNTIME=podman.exe
+  else
+    echo "Need podman or docker to run OpenAPI Generator." >&2
+    exit 1
   fi
 fi
 

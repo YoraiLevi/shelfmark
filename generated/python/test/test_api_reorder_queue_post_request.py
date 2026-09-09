@@ -14,10 +14,10 @@
 
 import unittest
 
-from shelfmark_client.models.api_download_release_post_request import ApiDownloadReleasePostRequest
+from shelfmark_client.models.api_reorder_queue_post_request import ApiReorderQueuePostRequest
 
-class TestApiDownloadReleasePostRequest(unittest.TestCase):
-    """ApiDownloadReleasePostRequest unit test stubs"""
+class TestApiReorderQueuePostRequest(unittest.TestCase):
+    """ApiReorderQueuePostRequest unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,34 +25,26 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> ApiDownloadReleasePostRequest:
-        """Test ApiDownloadReleasePostRequest
+    def make_instance(self, include_optional) -> ApiReorderQueuePostRequest:
+        """Test ApiReorderQueuePostRequest
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiDownloadReleasePostRequest`
+        # uncomment below to create an instance of `ApiReorderQueuePostRequest`
         """
-        model = ApiDownloadReleasePostRequest()
+        model = ApiReorderQueuePostRequest()
         if include_optional:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
-                format = '',
-                size = '',
-                extra = { },
-                priority = 56
+            return ApiReorderQueuePostRequest(
+                book_priorities = { }
             )
         else:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
+            return ApiReorderQueuePostRequest(
+                book_priorities = { },
         )
         """
 
-    def testApiDownloadReleasePostRequest(self):
-        """Test ApiDownloadReleasePostRequest"""
+    def testApiReorderQueuePostRequest(self):
+        """Test ApiReorderQueuePostRequest"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

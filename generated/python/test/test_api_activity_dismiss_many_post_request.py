@@ -14,10 +14,10 @@
 
 import unittest
 
-from shelfmark_client.models.api_download_release_post_request import ApiDownloadReleasePostRequest
+from shelfmark_client.models.api_activity_dismiss_many_post_request import ApiActivityDismissManyPostRequest
 
-class TestApiDownloadReleasePostRequest(unittest.TestCase):
-    """ApiDownloadReleasePostRequest unit test stubs"""
+class TestApiActivityDismissManyPostRequest(unittest.TestCase):
+    """ApiActivityDismissManyPostRequest unit test stubs"""
 
     def setUp(self):
         pass
@@ -25,34 +25,30 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def make_instance(self, include_optional) -> ApiDownloadReleasePostRequest:
-        """Test ApiDownloadReleasePostRequest
+    def make_instance(self, include_optional) -> ApiActivityDismissManyPostRequest:
+        """Test ApiActivityDismissManyPostRequest
             include_optional is a boolean, when False only required
             params are included, when True both required and
             optional params are included """
-        # uncomment below to create an instance of `ApiDownloadReleasePostRequest`
+        # uncomment below to create an instance of `ApiActivityDismissManyPostRequest`
         """
-        model = ApiDownloadReleasePostRequest()
+        model = ApiActivityDismissManyPostRequest()
         if include_optional:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
-                format = '',
-                size = '',
-                extra = { },
-                priority = 56
+            return ApiActivityDismissManyPostRequest(
+                items = [
+                    { }
+                    ]
             )
         else:
-            return ApiDownloadReleasePostRequest(
-                source = '',
-                source_id = '',
-                title = '',
+            return ApiActivityDismissManyPostRequest(
+                items = [
+                    { }
+                    ],
         )
         """
 
-    def testApiDownloadReleasePostRequest(self):
-        """Test ApiDownloadReleasePostRequest"""
+    def testApiActivityDismissManyPostRequest(self):
+        """Test ApiActivityDismissManyPostRequest"""
         # inst_req_only = self.make_instance(include_optional=False)
         # inst_req_and_optional = self.make_instance(include_optional=True)
 

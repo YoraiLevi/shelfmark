@@ -17,23 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApiDownloadReleasePostRequest(BaseModel):
+class ApiCreateRequestsBatchPostRequest(BaseModel):
     """
-    ApiDownloadReleasePostRequest
+    ApiCreateRequestsBatchPostRequest
     """ # noqa: E501
-    source: StrictStr = Field(description="Release source (e.g., \"direct_download\")")
-    source_id: StrictStr = Field(description="ID within the source (e.g., AA MD5 hash)")
-    title: StrictStr = Field(description="Book title")
-    format: Optional[StrictStr] = Field(default=None, description="File format")
-    size: Optional[StrictStr] = Field(default=None, description="Human-readable size")
-    extra: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
-    priority: Optional[StrictInt] = Field(default=None, description="Queue priority, lower is sooner")
-    __properties: ClassVar[List[str]] = ["source", "source_id", "title", "format", "size", "extra", "priority"]
+    requests: List[Dict[str, Any]] = Field(description="List of request objects as for POST /api/requests (required)")
+    __properties: ClassVar[List[str]] = ["requests"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +47,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiDownloadReleasePostRequest from a JSON string"""
+        """Create an instance of ApiCreateRequestsBatchPostRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,7 +72,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiDownloadReleasePostRequest from a dict"""
+        """Create an instance of ApiCreateRequestsBatchPostRequest from a dict"""
         if obj is None:
             return None
 
@@ -86,13 +80,7 @@ class ApiDownloadReleasePostRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source"),
-            "source_id": obj.get("source_id"),
-            "title": obj.get("title"),
-            "format": obj.get("format"),
-            "size": obj.get("size"),
-            "extra": obj.get("extra"),
-            "priority": obj.get("priority")
+            "requests": obj.get("requests")
         })
         return _obj
 

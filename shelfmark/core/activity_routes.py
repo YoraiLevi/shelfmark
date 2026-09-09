@@ -517,6 +517,8 @@ def register_activity_routes(
 
     @app.route("/api/activity/snapshot", methods=["GET"])
     def api_activity_snapshot() -> Response | tuple[Response, int]:
+        """Return the current activity snapshot for the viewer."""
+
         auth_gate = _require_authenticated(resolve_auth_mode, action="snapshot")
         if auth_gate is not None:
             return auth_gate
@@ -587,6 +589,13 @@ def register_activity_routes(
 
     @app.route("/api/activity/dismiss", methods=["POST"])
     def api_activity_dismiss() -> Response | tuple[Response, int]:
+        """Dismiss one activity item.
+
+        Request Body (JSON):
+            item_type (str): Item kind such as download or request (required)
+            item_key (str): Dismiss key such as download:<task_id> (required)
+        """
+
         auth_gate = _require_authenticated(resolve_auth_mode, action="dismiss")
         if auth_gate is not None:
             return auth_gate
@@ -761,6 +770,12 @@ def register_activity_routes(
 
     @app.route("/api/activity/dismiss-many", methods=["POST"])
     def api_activity_dismiss_many() -> Response | tuple[Response, int]:
+        """Dismiss many activity items.
+
+        Request Body (JSON):
+            items (list): List of objects with item_type and item_key (required)
+        """
+
         auth_gate = _require_authenticated(resolve_auth_mode, action="dismiss_many")
         if auth_gate is not None:
             return auth_gate
@@ -953,6 +968,8 @@ def register_activity_routes(
 
     @app.route("/api/activity/history", methods=["GET"])
     def api_activity_history() -> Response | tuple[Response, int]:
+        """List activity history."""
+
         auth_gate = _require_authenticated(resolve_auth_mode, action="history")
         if auth_gate is not None:
             return auth_gate
@@ -1064,6 +1081,8 @@ def register_activity_routes(
 
     @app.route("/api/activity/history", methods=["DELETE"])
     def api_activity_history_clear() -> Response | tuple[Response, int]:
+        """Clear activity history."""
+
         auth_gate = _require_authenticated(resolve_auth_mode, action="history_clear")
         if auth_gate is not None:
             return auth_gate
