@@ -314,11 +314,12 @@ def _filename_from_headers(raw, task_id):
     return _sanitize_name(name or str(task_id))
 
 
-def _assert_complete_body(body, headers, task_id):
+def _assert_complete_body(body, headers, task_id, filename=""):
     declared = headers.get("Content-Length")
     if declared and int(declared) != len(body):
         raise CliError("local download truncated for %s: got %s of %s bytes" % (task_id, len(body), declared))
-    if not body.startswith(b"PK"):
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in {".epub", ".zip", ".cbz"} and not body.startswith(b"PK"):
         return
     import io
     import zipfile
@@ -337,9 +338,10 @@ async def save_local_download(api, task_id, outdir):
         raise CliError("local download failed: HTTP %s" % raw.status)
     if not body:
         raise CliError("local download returned an empty body for %s" % task_id)
-    _assert_complete_body(body, raw.headers, task_id)
+    name = _filename_from_headers(raw, task_id)
+    _assert_complete_body(body, raw.headers, task_id, name)
     os.makedirs(outdir, exist_ok=True)
-    path = _unique_path(outdir, _filename_from_headers(raw, task_id))
+    path = _unique_path(outdir, name)
     with open(path, "wb") as handle:
         handle.write(body)
     return path
