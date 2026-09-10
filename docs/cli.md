@@ -100,7 +100,7 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | :--- | :--- |
 | General | `-h` / `--help`, `--version`, `--host`, `-q` / `--quiet`, `-v` / `--verbose`, `--status` |
 | Search | `--isbn`, `--title`, `--provider`, `--source`, `--limit` |
-| Download | `-n` / `--simulate`, `-o` / `--output`, `--wait` |
+| Download | `-n` / `--simulate`, `-o` / `--output`, `--wait`, `--force-download` |
 | Auth | `-u` / `--username`, `-p` / `--password` |
 
 ## Flags
@@ -117,6 +117,7 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | `--source` | Release source (default `direct_download`) |
 | `--limit` | Metadata hits (default `10`) |
 | `--wait` | Poll the queue (default `300` with `-o`, else `0`) |
+| `--force-download` | On already-queued, `POST /api/download/<id>/retry` instead of copying the stored file |
 | `-u` / `--username`, `-p` / `--password` | Login when `AUTH_METHOD` is not `none`. Prompt if `--username` is set and `--password` is omitted |
 
 `--status` does not require `QUERY`. Every other mode does.
@@ -128,3 +129,6 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 When `--output` is omitted, the CLI queues (unless `--simulate`) and prints status only.
 
 When `AUTH_METHOD` is not `none`, pass `-u` / `-p` so the CLI can call `api_login_post` and reuse the cookie jar.
+
+`--force-download` is for an already-queued `source_id`: it calls `POST /api/download/<id>/retry` instead of copying the stored file. The node only retries tasks in **error** or **cancelled** state. A completed download, including a corrupt stored file, returns `409` with the node's reason. The CLI prints that and exits; it cannot delete history or cancel a completed task.
+

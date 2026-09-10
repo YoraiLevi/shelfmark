@@ -63,6 +63,7 @@ def _add_download(parser):
     group.add_argument("-n", "--simulate", action="store_true", help="Search only; do not queue")
     group.add_argument("-o", "--output", metavar="DIR", help="Copy the finished file into DIR")
     group.add_argument("--wait", metavar="SECONDS", type=int, default=None, help="Poll the queue (default: 300 with -o, else 0)")
+    group.add_argument("--force-download", action="store_true", help="Ask the node to fetch again when the release is already queued")
 
 
 def _add_auth(parser):
@@ -196,6 +197,14 @@ async def queue_download(api, release):
     if _already_queued(raw.status, body):
         source_id = str(release.get("source_id") or "")
         return {"status": "already_queued", "source_id": source_id, "id": source_id}
+    return _json_body(raw.status, body)
+
+
+async def force_redownload(api, task_id):
+    raw = await api.api_retry_download_post_without_preload_content(book_id=str(task_id))
+    body = await raw.read()
+    if raw.status >= 400:
+        raise CliError("force-download refused: HTTP %s: %s" % (raw.status, body[:300]))
     return _json_body(raw.status, body)
 
 
@@ -368,6 +377,14 @@ async def _run_download(api, args, release):
 
 
 async def _finish_existing(api, args, keys):
+    if getattr(args, "force_download", False):
+        task_id = keys[0] if keys else ""
+        if not task_id:
+            raise CliError("force-download needs a source_id")
+        queued = await force_redownload(api, task_id)
+        if not args.quiet:
+            print(json.dumps(queued, indent=2, default=str))
+        return await _wait_and_save(api, args, keys)
     payload = await _status_payload(api)
     found = _find_entry(payload, keys)
     if found and _is_failed(found[0], found[1]):
