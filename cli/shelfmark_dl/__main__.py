@@ -31,6 +31,123 @@ class CliError(Exception):
     """User-facing CLI failure."""
 
 
+class _Spinner:
+    """Single-line stderr progress indicator; inert when stderr is not a TTY."""
+
+    FRAMES = "|/-\\"
+    INTERVAL = 0.12
+
+    def __init__(self, stream):
+        self._stream = stream
+        self._tty = bool(getattr(stream, "isatty", None) and stream.isatty())
+        self._label = ""
+        self._task = None
+        self._frame = 0
+        self._width = 0
+
+    def start(self, label):
+        self._label = label
+        if self._tty:
+            if self._task is None:
+                self._task = asyncio.ensure_future(self._spin())
+            return
+        self._stream.write("%s\n" % label)
+        self._stream.flush()
+
+    def update(self, label):
+        if label == self._label:
+            return
+        self._label = label
+        if not self._tty:
+            self._stream.write("%s\n" % label)
+            self._stream.flush()
+
+    def relabel(self, label):
+        self._label = label
+
+    async def stop(self):
+        task, self._task = self._task, None
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        self.clear()
+
+    def clear(self):
+        if not self._tty or not self._width:
+            return
+        self._stream.write("\r%s\r" % (" " * self._width))
+        self._stream.flush()
+        self._width = 0
+
+    async def _spin(self):
+        while True:
+            frame = self.FRAMES[self._frame % len(self.FRAMES)]
+            self._frame += 1
+            text = "%s %s" % (frame, self._label)
+            self._width = max(self._width, len(text))
+            self._stream.write("\r%s" % text.ljust(self._width))
+            self._stream.flush()
+            await asyncio.sleep(self.INTERVAL)
+
+
+class Out:
+    """Output policy: human lines, quiet results only, or JSONL debug events."""
+
+    def __init__(self, mode, verbose=False, stream=None):
+        self.mode = mode
+        self.verbose = bool(verbose) and mode == "human"
+        self.stream = sys.stderr if stream is None else stream
+        self._spinner = _Spinner(self.stream) if mode == "human" else None
+
+    def say(self, text):
+        if self.mode != "human":
+            return
+        self._spinner.clear()
+        self.stream.write("%s\n" % text)
+        self.stream.flush()
+
+    def detail(self, text):
+        if self.verbose:
+            self.say(text)
+
+    def event(self, kind, **fields):
+        if self.mode != "jsonl":
+            return
+        record = {"event": kind}
+        record.update(fields)
+        sys.stdout.write(json.dumps(record, default=str, separators=(",", ":")) + "\n")
+        sys.stdout.flush()
+
+    def result(self, text):
+        if self.mode == "jsonl":
+            return
+        print(text)
+
+    def begin(self, label):
+        if self._spinner is not None:
+            self._spinner.start(label)
+
+    def progress(self, label):
+        if self.verbose:
+            self.say(label)
+            if self._spinner is not None:
+                self._spinner.relabel(label)
+            return
+        if self._spinner is not None:
+            self._spinner.update(label)
+
+    async def end(self):
+        if self._spinner is not None:
+            await self._spinner.stop()
+
+    def close(self):
+        if self._spinner is not None:
+            self._spinner.clear()
+
+
 class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
     def add_usage(self, usage, actions, groups, prefix=None):
         if prefix is None:
@@ -41,10 +158,30 @@ class _HelpFormatter(argparse.RawDescriptionHelpFormatter):
 def _add_general(parser):
     group = parser.add_argument_group("General")
     group.add_argument("-h", "--help", action="help", help="Print this help text and exit")
-    group.add_argument("--version", action="version", version="%(prog)s " + __version__, help="Print program version and exit")
-    group.add_argument("--host", metavar="URL", default=DEFAULT_HOST, help="Node base URL (default: %s)" % DEFAULT_HOST)
-    group.add_argument("-q", "--quiet", action="store_true", help="Print only results")
-    group.add_argument("-v", "--verbose", action="store_true", help="Print extra progress")
+    group.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s " + __version__,
+        help="Print program version and exit",
+    )
+    group.add_argument(
+        "--host",
+        metavar="URL",
+        default=DEFAULT_HOST,
+        help="Node base URL (default: %s)" % DEFAULT_HOST,
+    )
+    group.add_argument(
+        "-q", "--quiet", action="store_true", help="No progress; print only the saved file path"
+    )
+    group.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Extra human detail on stderr (every metadata hit and wait status change)",
+    )
+    group.add_argument(
+        "--jsonl", action="store_true", help="One JSON event per line on stdout (debug)"
+    )
     group.add_argument("--status", action="store_true", help="Print download queue JSON and exit")
 
 
@@ -53,23 +190,49 @@ def _add_search(parser):
     kind = group.add_mutually_exclusive_group()
     kind.add_argument("--isbn", action="store_true", help="Treat QUERY as an ISBN")
     kind.add_argument("--title", action="store_true", help="Treat QUERY as a title (default)")
-    group.add_argument("--provider", metavar="NAME", default="openlibrary", help="Metadata provider (default: openlibrary)")
-    group.add_argument("--source", metavar="NAME", default="direct_download", help="Release source (default: direct_download)")
-    group.add_argument("--limit", metavar="N", type=int, default=10, help="Metadata hits (default: 10)")
+    group.add_argument(
+        "--provider",
+        metavar="NAME",
+        default="openlibrary",
+        help="Metadata provider (default: openlibrary)",
+    )
+    group.add_argument(
+        "--source",
+        metavar="NAME",
+        default="direct_download",
+        help="Release source (default: direct_download)",
+    )
+    group.add_argument(
+        "--limit", metavar="N", type=int, default=10, help="Metadata hits (default: 10)"
+    )
 
 
 def _add_download(parser):
     group = parser.add_argument_group("Download")
     group.add_argument("-n", "--simulate", action="store_true", help="Search only; do not queue")
     group.add_argument("-o", "--output", metavar="DIR", help="Copy the finished file into DIR")
-    group.add_argument("--wait", metavar="SECONDS", type=int, default=None, help="Poll the queue (default: 300 with -o, else 0)")
-    group.add_argument("--force-download", action="store_true", help="Ask the node to fetch again when the release is already queued")
+    group.add_argument(
+        "--wait",
+        metavar="SECONDS",
+        type=int,
+        default=None,
+        help="Poll the queue (default: 300 with -o, else 0)",
+    )
+    group.add_argument(
+        "--force-download",
+        action="store_true",
+        help="Re-queue a completed release (POST force_download=true)",
+    )
 
 
 def _add_auth(parser):
     group = parser.add_argument_group("Auth")
-    group.add_argument("-u", "--username", metavar="USER", help="Login when AUTH_METHOD is not none")
-    group.add_argument("-p", "--password", metavar="PASS", help="Prompt if --username is set and this is omitted")
+    group.add_argument(
+        "-u", "--username", metavar="USER", help="Login when AUTH_METHOD is not none"
+    )
+    group.add_argument(
+        "-p", "--password", metavar="PASS", help="Prompt if --username is set and this is omitted"
+    )
 
 
 def _build_parser():
@@ -95,6 +258,11 @@ def parse_args(argv=None):
         args.wait = 300 if args.output else 0
     if not args.status and not args.query:
         parser.error("the following arguments are required: QUERY")
+    if args.quiet and args.jsonl:
+        parser.error("argument --jsonl: not allowed with argument -q/--quiet")
+    if args.quiet and args.verbose:
+        parser.error("argument -v/--verbose: not allowed with argument -q/--quiet")
+    args.mode = "jsonl" if args.jsonl else "quiet" if args.quiet else "human"
     return args
 
 
@@ -106,6 +274,7 @@ def _unsafe_cookie_session(rest):
         connector=aiohttp.TCPConnector(limit=rest.maxsize, ssl=rest.ssl_context),
         cookie_jar=aiohttp.CookieJar(unsafe=True),
         trust_env=True,
+        timeout=aiohttp.ClientTimeout(sock_connect=15, sock_read=120),
     )
 
 
@@ -158,14 +327,41 @@ async def search_metadata(api, query, provider, limit):
     return (payload or {}).get("books") or []
 
 
+def _hit_isbns(hit):
+    """ISBNs carried by a metadata hit, longest form first, de-duplicated."""
+    hit = hit if isinstance(hit, dict) else {}
+    found = []
+    for key in ("isbn_13", "isbn_10", "isbn"):
+        value = hit.get(key)
+        values = value if isinstance(value, (list, tuple)) else [value]
+        for item in values:
+            text = str(item).strip() if item else ""
+            if text and text not in found:
+                found.append(text)
+    return found
+
+
 async def search_releases(api, hit, query, isbn, source):
-    raw = await api.api_releases_get_without_preload_content(
-        provider=str(hit.get("provider") or "openlibrary"),
-        book_id=str(hit.get("provider_id") or hit.get("id") or ""),
-        source=source,
-        isbn=[query] if isbn else None,
-        title=None if isbn else query,
-    )
+    hit = hit if isinstance(hit, dict) else {}
+    kwargs = {
+        "provider": str(hit.get("provider") or "openlibrary"),
+        "book_id": str(hit.get("provider_id") or hit.get("id") or ""),
+        "source": source,
+    }
+    if isbn:
+        kwargs["isbn"] = [query]
+    else:
+        isbns = _hit_isbns(hit)
+        if isbns:
+            kwargs["isbn"] = isbns
+        else:
+            # Direct download is ISBN-first; without one it needs title/author search.
+            kwargs["expand_search"] = True
+        kwargs["title"] = _text(hit.get("title")) or query
+        author = _text(hit.get("author") or hit.get("authors"))
+        if author:
+            kwargs["author"] = author
+    raw = await api.api_releases_get_without_preload_content(**kwargs)
     payload = await _read_json(raw)
     return (payload or {}).get("releases") or []
 
@@ -176,34 +372,34 @@ def _already_queued(status, body):
     return ALREADY_QUEUED in body.decode("utf-8", "replace").lower()
 
 
-def _download_request(release):
+def _download_request(release, *, force_download=False):
     from shelfmark_client import ApiDownloadReleasePostRequest
 
     extra = release.get("extra")
-    return ApiDownloadReleasePostRequest(
-        source=str(release.get("source") or ""),
-        source_id=str(release.get("source_id") or ""),
-        title=release.get("title"),
-        format=release.get("format"),
-        extra=extra if isinstance(extra, dict) else None,
-    )
+    request_kwargs = {
+        "source": str(release.get("source") or ""),
+        "source_id": str(release.get("source_id") or ""),
+        "title": release.get("title"),
+        "format": release.get("format"),
+        "extra": extra if isinstance(extra, dict) else None,
+    }
+    if force_download:
+        request_kwargs["force_download"] = True
+    return ApiDownloadReleasePostRequest(**request_kwargs)
 
 
-async def queue_download(api, release):
+async def queue_download(api, release, *, force_download=False):
     raw = await api.api_download_release_post_without_preload_content(
-        api_download_release_post_request=_download_request(release)
+        api_download_release_post_request=_download_request(release, force_download=force_download)
     )
     body = await raw.read()
     if _already_queued(raw.status, body):
         source_id = str(release.get("source_id") or "")
         return {"status": "already_queued", "source_id": source_id, "id": source_id}
-    return _json_body(raw.status, body)
-
-
-async def force_redownload(api, task_id):
-    raw = await api.api_retry_download_post_without_preload_content(book_id=str(task_id))
-    body = await raw.read()
-    if raw.status >= 400:
+    if force_download and raw.status == 409:
+        source_id = str(release.get("source_id") or "")
+        return {"status": "already_queued", "source_id": source_id, "id": source_id}
+    if force_download and raw.status >= 400:
         raise CliError("force-download refused: HTTP %s: %s" % (raw.status, body[:300]))
     return _json_body(raw.status, body)
 
@@ -271,20 +467,46 @@ def _task_keys(queued, release):
     return keys
 
 
-async def wait_for_task(api, task_key, timeout, verbose):
+def _entry_state(found):
+    if not found:
+        return "pending", None
+    state, entry = found
+    entry = entry if isinstance(entry, dict) else {}
+    status = str(entry.get("status") or state or "") or "pending"
+    progress = entry.get("progress")
+    if progress is None:
+        progress = entry.get("percent")
+    return status, progress
+
+
+def _wait_label(state, progress):
+    if progress in (None, ""):
+        return "waiting: %s" % state
+    return "waiting: %s (%s)" % (state, progress)
+
+
+async def wait_for_task(api, task_key, timeout, out):
     deadline = time.monotonic() + timeout
-    while True:
-        payload = await _status_payload(api)
-        found = _find_entry(payload, task_key)
-        if found and _is_done(found[0], found[1]):
-            return _resolved_id(found, task_key)
-        if found and _is_failed(found[0], found[1]):
-            raise CliError("download failed")
-        if timeout <= 0 or time.monotonic() >= deadline:
-            return None
-        if verbose:
-            print_status(payload, False)
-        await asyncio.sleep(1)
+    seen = None
+    out.begin(_wait_label("pending", None))
+    try:
+        while True:
+            payload = await _status_payload(api)
+            found = _find_entry(payload, task_key)
+            state, progress = _entry_state(found)
+            if (state, progress) != seen:
+                seen = (state, progress)
+                out.progress(_wait_label(state, progress))
+                out.event("wait", state=state, progress=progress)
+            if found and _is_done(found[0], found[1]):
+                return _resolved_id(found, task_key)
+            if found and _is_failed(found[0], found[1]):
+                raise CliError("download failed")
+            if timeout <= 0 or time.monotonic() >= deadline:
+                return None
+            await asyncio.sleep(1)
+    finally:
+        await out.end()
 
 
 def _header_filename(header):
@@ -326,12 +548,15 @@ def _filename_from_headers(raw, task_id):
 def _assert_complete_body(body, headers, task_id, filename=""):
     declared = headers.get("Content-Length")
     if declared and int(declared) != len(body):
-        raise CliError("local download truncated for %s: got %s of %s bytes" % (task_id, len(body), declared))
+        raise CliError(
+            "local download truncated for %s: got %s of %s bytes" % (task_id, len(body), declared)
+        )
     ext = os.path.splitext(filename)[1].lower()
     if ext not in {".epub", ".zip", ".cbz"} and not body.startswith(b"PK"):
         return
     import io
     import zipfile
+
     try:
         bad = zipfile.ZipFile(io.BytesIO(body)).testzip()
     except zipfile.BadZipFile as exc:
@@ -356,83 +581,158 @@ async def save_local_download(api, task_id, outdir):
     return path
 
 
-def print_status(payload, quiet):
-    indent = None if quiet else 2
+def print_status(payload, mode):
+    if mode == "jsonl":
+        print(json.dumps(payload, default=str, separators=(",", ":")))
+        return
+    indent = None if mode == "quiet" else 2
     print(json.dumps(payload, indent=indent, default=str))
 
 
-def _show(rows, quiet):
-    indent = None if quiet else 2
-    print(json.dumps(rows, indent=indent, default=str))
+def _text(value):
+    if isinstance(value, (list, tuple)):
+        return ", ".join(str(item) for item in value if item)
+    return "" if value is None else str(value)
 
 
-async def _run_download(api, args, release):
-    queued = await queue_download(api, release)
-    if not args.quiet:
-        print(json.dumps(queued, indent=2, default=str))
+def _book_fields(book):
+    book = book if isinstance(book, dict) else {}
+    return {
+        "title": _text(book.get("title")),
+        "author": _text(book.get("author") or book.get("authors")),
+        "provider": _text(book.get("provider")),
+        "provider_id": _text(book.get("provider_id") or book.get("id")),
+    }
+
+
+def _book_line(book):
+    fields = _book_fields(book)
+    parts = [fields["title"] or "(untitled)"]
+    if fields["author"]:
+        parts.append("by %s" % fields["author"])
+    ident = "/".join(part for part in (fields["provider"], fields["provider_id"]) if part)
+    if ident:
+        parts.append("[%s]" % ident)
+    return " ".join(parts)
+
+
+def _release_fields(release):
+    release = release if isinstance(release, dict) else {}
+    return {
+        "title": _text(release.get("title")),
+        "format": _text(release.get("format")),
+        "size": _text(release.get("size") or release.get("filesize")),
+        "source": _text(release.get("source")),
+        "source_id": _text(release.get("source_id")),
+    }
+
+
+def _release_line(release):
+    fields = _release_fields(release)
+    parts = [fields["title"] or "(untitled)"]
+    meta = [item for item in (fields["format"], fields["size"], fields["source"]) if item]
+    if meta:
+        parts.append("(%s)" % ", ".join(meta))
+    if fields["source_id"]:
+        parts.append("source_id=%s" % fields["source_id"])
+    return " ".join(parts)
+
+
+async def _run_download(api, args, release, out):
+    out.say("Queueing %s" % _release_line(release))
+    queued = await queue_download(
+        api, release, force_download=getattr(args, "force_download", False)
+    )
+    state = str(queued.get("status") or "queued")
+    out.say("Node accepted the release (%s)" % state)
+    out.event("queued", status=state, id=queued.get("id"), **_release_fields(release))
     keys = _task_keys(queued, release)
     if queued.get("status") == "already_queued":
-        return await _finish_existing(api, args, keys)
-    return await _wait_and_save(api, args, keys)
+        return await _finish_existing(api, args, keys, out)
+    return await _wait_and_save(api, args, keys, out)
 
 
-async def _finish_existing(api, args, keys):
-    if getattr(args, "force_download", False):
-        task_id = keys[0] if keys else ""
-        if not task_id:
-            raise CliError("force-download needs a source_id")
-        queued = await force_redownload(api, task_id)
-        if not args.quiet:
-            print(json.dumps(queued, indent=2, default=str))
-        return await _wait_and_save(api, args, keys)
+async def _finish_existing(api, args, keys, out):
     payload = await _status_payload(api)
     found = _find_entry(payload, keys)
     if found and _is_failed(found[0], found[1]):
         raise CliError("download failed")
     if found and not _is_done(found[0], found[1]):
-        return await _wait_and_save(api, args, keys)
+        return await _wait_and_save(api, args, keys, out)
     task_id = _resolved_id(found, keys) if found else (keys[0] if keys else "")
-    return await _save_if_requested(api, args, task_id)
+    return await _save_if_requested(api, args, task_id, out)
 
 
-async def _wait_and_save(api, args, keys):
-    task_id = await wait_for_task(api, keys, args.wait, args.verbose)
-    return await _save_if_requested(api, args, task_id)
+async def _wait_and_save(api, args, keys, out):
+    task_id = await wait_for_task(api, keys, args.wait, out)
+    return await _save_if_requested(api, args, task_id, out)
 
 
-async def _save_if_requested(api, args, task_id):
+async def _save_if_requested(api, args, task_id, out):
     if not args.output:
         return 0
     if not task_id:
         raise CliError("download did not finish in time")
-    path = await save_local_download(api, task_id, args.output)
-    if not args.quiet:
-        print(path)
+    out.say("Copying the finished file into %s" % args.output)
+    out.begin("copying file")
+    try:
+        path = await save_local_download(api, task_id, args.output)
+    finally:
+        await out.end()
+    out.event("saved", id=str(task_id), path=path)
+    out.result(path)
     return 0
 
 
-async def _run_search(api, args):
+async def _run_search(api, args, out):
     query = " ".join(args.query)
-    books = await search_metadata(api, query, args.provider, args.limit)
+    out.say("Searching %s metadata for %s" % (args.provider, query))
+    out.event(
+        "metadata_search",
+        query=query,
+        provider=args.provider,
+        isbn=bool(args.isbn),
+        limit=args.limit,
+    )
+    out.begin("searching metadata")
+    try:
+        books = await search_metadata(api, query, args.provider, args.limit)
+    finally:
+        await out.end()
     if not books:
         raise CliError("no metadata hits for %r" % query)
-    _show(books, args.quiet)
-    releases = await search_releases(api, books[0], query, args.isbn, args.source)
+    for book in books:
+        out.event("metadata_hit", **_book_fields(book))
+        out.detail(_book_line(book))
+    out.say("%d metadata hit(s); using %s" % (len(books), _book_line(books[0])))
+    out.say("Searching %s releases (this can take a while)" % args.source)
+    out.event("release_search", source=args.source, **_book_fields(books[0]))
+    out.begin("searching releases")
+    try:
+        releases = await search_releases(api, books[0], query, args.isbn, args.source)
+    finally:
+        await out.end()
     if not releases:
+        fields = _book_fields(books[0])
+        using = " / ".join(part for part in (fields["title"], fields["provider_id"]) if part)
+        if using:
+            raise CliError("no releases for %r (using %s)" % (query, using))
         raise CliError("no releases for %r" % query)
-    _show(releases, args.quiet)
+    for release in releases:
+        out.detail(_release_line(release))
+    out.say("%d release(s); picking %s" % (len(releases), _release_line(releases[0])))
     if args.simulate:
         return 0
-    return await _run_download(api, args, releases[0])
+    return await _run_download(api, args, releases[0], out)
 
 
-async def async_main(args):
+async def async_main(args, out):
     async with connect_api(args.host) as api:
         await maybe_login(api, args.username, args.password)
         if args.status:
-            print_status(await _status_payload(api), args.quiet)
+            print_status(await _status_payload(api), out.mode)
             return 0
-        return await _run_search(api, args)
+        return await _run_search(api, args, out)
 
 
 def _error_types():
@@ -442,7 +742,10 @@ def _error_types():
     return (CliError, OSError, TimeoutError, aiohttp.ClientError, ApiException)
 
 
-def _fail(exc):
+def _fail(exc, out=None):
+    if out is not None:
+        out.close()
+        out.event("error", type=type(exc).__name__, message=str(exc))
     sys.stderr.write("%s\n" % exc)
     return 1
 
@@ -454,16 +757,18 @@ def _prompt_password(args):
 
 def main(argv=None):
     args = parse_args(argv)
+    out = Out(args.mode, verbose=args.verbose)
     errors = _error_types()
     try:
         _prompt_password(args)
-        return asyncio.run(async_main(args))
+        return asyncio.run(async_main(args, out))
     except KeyboardInterrupt:
+        out.close()
         return 130
     except EOFError:
-        return _fail(CliError("password required: pass --password or use a TTY"))
+        return _fail(CliError("password required: pass --password or use a TTY"), out)
     except errors as exc:
-        return _fail(exc)
+        return _fail(exc, out)
 
 
 if __name__ == "__main__":

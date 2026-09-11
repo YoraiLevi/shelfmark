@@ -41,7 +41,8 @@ class TestApiDownloadReleasePostRequest(unittest.TestCase):
                 format = '',
                 size = '',
                 extra = { },
-                priority = 56
+                priority = 56,
+                force_download = True
             )
         else:
             return ApiDownloadReleasePostRequest(

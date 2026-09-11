@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -33,7 +33,8 @@ class ApiDownloadReleasePostRequest(BaseModel):
     size: Optional[StrictStr] = Field(default=None, description="Human-readable size")
     extra: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
     priority: Optional[StrictInt] = Field(default=None, description="Queue priority, lower is sooner")
-    __properties: ClassVar[List[str]] = ["source", "source_id", "title", "format", "size", "extra", "priority"]
+    force_download: Optional[StrictBool] = Field(default=None, description="Re-queue a completed release; 409 if still active")
+    __properties: ClassVar[List[str]] = ["source", "source_id", "title", "format", "size", "extra", "priority", "force_download"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -92,7 +93,8 @@ class ApiDownloadReleasePostRequest(BaseModel):
             "format": obj.get("format"),
             "size": obj.get("size"),
             "extra": obj.get("extra"),
-            "priority": obj.get("priority")
+            "priority": obj.get("priority"),
+            "force_download": obj.get("force_download")
         })
         return _obj
 

@@ -157,6 +157,7 @@ class DownloadTask:
     last_error_message: str | None = None
     last_error_type: str | None = None
     staged_path: str | None = None
+    force_redownload: bool = False
 
     def __lt__(self, other: DownloadTask) -> bool:
         """Compare tasks for priority queue (lower priority number = higher precedence)."""

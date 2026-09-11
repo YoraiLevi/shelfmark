@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from shelfmark.core.models import DownloadTask
+from shelfmark.core.models import DownloadTask, QueueStatus
 from shelfmark.core.queue import BookQueue
 
 
@@ -51,3 +51,49 @@ def test_enqueue_existing_logs_queue_hook_failures():
     assert args[0] == "Queue hook failed while requeueing task %s: %s"
     assert args[1] == "task-2"
     assert str(args[2]) == "boom"
+
+
+def test_add_refuses_completed_task_without_force():
+    queue = BookQueue()
+    task = _make_task("done-1")
+    assert queue.add(task) is True
+    queue.update_status("done-1", QueueStatus.COMPLETE)
+
+    assert queue.add(_make_task("done-1")) is False
+    assert queue.get_task_status("done-1") == QueueStatus.COMPLETE
+
+
+def test_add_force_requeues_completed_task():
+    queue = BookQueue()
+    first = _make_task("done-2")
+    first.staged_path = "/tmp/old.epub"
+    first.progress = 1.0
+    assert queue.add(first) is True
+    queue.update_status("done-2", QueueStatus.COMPLETE)
+
+    replacement = _make_task("done-2")
+    replacement.title = "Requeued Title"
+    assert queue.add(replacement, force=True) is True
+    assert queue.get_task_status("done-2") == QueueStatus.QUEUED
+    stored = queue.get_task("done-2")
+    assert stored is replacement
+    assert stored.title == "Requeued Title"
+    assert first.staged_path == "/tmp/old.epub"
+    assert first.progress == 1.0
+
+
+def test_add_force_refuses_downloading_task():
+    queue = BookQueue()
+    assert queue.add(_make_task("live-1")) is True
+    queue.update_status("live-1", QueueStatus.DOWNLOADING)
+
+    assert queue.add(_make_task("live-1"), force=True) is False
+    assert queue.get_task_status("live-1") == QueueStatus.DOWNLOADING
+
+
+def test_add_force_refuses_queued_task():
+    queue = BookQueue()
+    assert queue.add(_make_task("queued-1")) is True
+
+    assert queue.add(_make_task("queued-1"), force=True) is False
+    assert queue.get_task_status("queued-1") == QueueStatus.QUEUED

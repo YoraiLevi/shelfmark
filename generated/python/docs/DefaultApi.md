@@ -2196,6 +2196,7 @@ Request Body (JSON):
     size (str, optional): Human-readable size
     extra (dict, optional): Additional metadata
     priority (int, optional): Queue priority, lower is sooner
+    force_download (bool, optional): Re-queue a completed release; 409 if still active
 
 Returns:
     flask.Response: JSON status object indicating success or failure.

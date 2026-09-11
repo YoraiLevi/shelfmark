@@ -12,7 +12,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from email.utils import parseaddr
 from pathlib import Path
 from threading import Event, Lock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from shelfmark.core.config import config
 from shelfmark.core.logger import setup_logger
@@ -223,6 +223,17 @@ def _build_retry_resolution_fields(
     }
 
 
+class QueueReleaseError(str):
+    """Queue failure text that also carries a machine-readable code."""
+
+    code: str
+
+    def __new__(cls, message: str, *, code: str) -> Self:
+        instance = str.__new__(cls, message)
+        instance.code = code
+        return instance
+
+
 def queue_release(
     release_data: dict,
     priority: int = 0,
@@ -243,6 +254,7 @@ def queue_release(
         if isinstance(raw_request_id, int) and raw_request_id > 0:
             request_id = raw_request_id
         search_mode = _parse_release_search_mode(release_data.get("search_mode"))
+        force_download = release_data.get("force_download") is True
 
         # Get author, year, preview, and content_type from top-level (preferred) or extra (fallback)
         author = release_data.get("author") or extra.get("author")
@@ -277,8 +289,9 @@ def queue_release(
 
         output_mode = "folder" if is_audiobook else books_output_mode
         output_args: dict[str, Any] = {}
-        retry_resolution_fields = _build_retry_resolution_fields(release_data)
-
+        retry_resolution_fields = (
+            {} if force_download else _build_retry_resolution_fields(release_data)
+        )
         if output_mode == "email" and not is_audiobook:
             email_to, email_error = _resolve_email_destination(user_id=user_id)
             if email_error:
@@ -311,11 +324,23 @@ def queue_release(
             user_id=user_id,
             username=username,
             request_id=request_id,
+            force_redownload=force_download,
             **retry_resolution_fields,
         )
 
-        if not book_queue.add(task):
+        if force_download:
+            existing = book_queue.get_task(task.task_id)
+            if existing is not None and existing.request_id is not None:
+                logger.info("Refused force download for request-linked task: %s", task.title)
+                return False, "Request-linked downloads must be retried from requests"
+
+        if not book_queue.add(task, force=force_download):
             logger.info("Release already in queue: %s", task.title)
+            if force_download:
+                return False, QueueReleaseError(
+                    "Download is still active",
+                    code="download_active",
+                )
             return False, "Release is already in the download queue"
 
         logger.info("Release queued with priority %s: %s", priority, task.title)
@@ -488,6 +513,7 @@ def serialize_task_for_retry(task: DownloadTask) -> dict[str, Any]:
         "can_retry_without_staged_source": bool(
             getattr(task, "can_retry_without_staged_source", True)
         ),
+        "force_redownload": bool(getattr(task, "force_redownload", False)),
     }
 
 
@@ -548,6 +574,7 @@ def _restore_task_from_retry_payload(payload: object) -> DownloadTask | None:
             dict(retry_source_context) if isinstance(retry_source_context, dict) else {}
         ),
         can_retry_without_staged_source=bool(payload.get("can_retry_without_staged_source", True)),
+        force_redownload=bool(payload.get("force_redownload", False)),
     )
 
 
@@ -730,7 +757,7 @@ def _download_task(task_id: str, cancel_flag: Event) -> str | None:
     handler = get_handler(task.source)
     temp_file: Path | None = None
 
-    if task.staged_path:
+    if task.staged_path and not task.force_redownload:
         staged_file = Path(task.staged_path)
         if run_blocking_io(staged_file.exists):
             temp_file = staged_file

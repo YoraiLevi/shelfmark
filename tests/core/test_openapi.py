@@ -122,6 +122,9 @@ def test_download_and_login_have_json_request_bodies(main_module) -> None:
     assert "source" in props
     assert "source_id" in props
     assert "title" in props
+    assert "force_download" in props
+    assert props["force_download"]["type"] == "boolean"
+    assert "force_download" not in schema["required"]
     login = spec["paths"]["/api/auth/login"]["post"]["requestBody"]
     login_schema = login["content"]["application/json"]["schema"]
     login_props = login_schema["properties"]

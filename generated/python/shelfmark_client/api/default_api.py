@@ -8047,7 +8047,7 @@ class DefaultApi:
     ) -> None:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner     force_download (bool, optional): Re-queue a completed release; 409 if still active  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest
@@ -8117,7 +8117,7 @@ class DefaultApi:
     ) -> ApiResponse[None]:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner     force_download (bool, optional): Re-queue a completed release; 409 if still active  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest
@@ -8187,7 +8187,7 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Queue a release for download.
 
-        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner  Returns:     flask.Response: JSON status object indicating success or failure.
+        Queue a release for download.  This endpoint is used when downloading from the ReleaseModal where the frontend already has all the release data from the search results.  Request Body (JSON):     source (str): Release source (e.g., \"direct_download\")     source_id (str): ID within the source (e.g., AA MD5 hash)     title (str, optional): Book title     format (str, optional): File format     size (str, optional): Human-readable size     extra (dict, optional): Additional metadata     priority (int, optional): Queue priority, lower is sooner     force_download (bool, optional): Re-queue a completed release; 409 if still active  Returns:     flask.Response: JSON status object indicating success or failure.
 
         :param api_download_release_post_request: (required)
         :type api_download_release_post_request: ApiDownloadReleasePostRequest

@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **size** | **str** | Human-readable size | [optional] 
 **extra** | **Dict[str, object]** | Additional metadata | [optional] 
 **priority** | **int** | Queue priority, lower is sooner | [optional] 
+**force_download** | **bool** | Re-queue a completed release; 409 if still active | [optional] 
 
 ## Example
 

@@ -285,3 +285,158 @@ def test_get_book_data_clears_download_path_when_file_read_fails(monkeypatch, tm
     assert file_data is None
     assert returned_task is task
     assert task.download_path is None
+
+
+def _release_payload(source_id: str = "sid-force-1", **extra: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "source": "direct_download",
+        "source_id": source_id,
+        "title": "Force Title",
+    }
+    payload.update(extra)
+    return payload
+
+
+def test_queue_release_without_force_still_duplicates_complete(monkeypatch):
+    import shelfmark.download.orchestrator as orchestrator
+
+    queue = BookQueue()
+    monkeypatch.setattr(orchestrator, "book_queue", queue)
+    monkeypatch.setattr(orchestrator, "ws_manager", None)
+
+    assert orchestrator.queue_release(_release_payload(), 0)[0] is True
+    queue.update_status("sid-force-1", QueueStatus.COMPLETE)
+
+    ok, error = orchestrator.queue_release(_release_payload(), 0)
+    assert ok is False
+    assert error == "Release is already in the download queue"
+
+
+def test_queue_release_force_requeues_completed_without_deleting_file(monkeypatch, tmp_path):
+    import shelfmark.download.orchestrator as orchestrator
+
+    queue = BookQueue()
+    monkeypatch.setattr(orchestrator, "book_queue", queue)
+    monkeypatch.setattr(orchestrator, "ws_manager", None)
+
+    kept_file = tmp_path / "kept.epub"
+    kept_file.write_text("old bytes")
+
+    assert orchestrator.queue_release(_release_payload(), 0)[0] is True
+    old = queue.get_task("sid-force-1")
+    assert old is not None
+    old.staged_path = str(tmp_path / "staged.epub")
+    old.progress = 1.0
+    old.download_path = str(kept_file)
+    queue.update_status("sid-force-1", QueueStatus.COMPLETE)
+
+    ok, error = orchestrator.queue_release(_release_payload(force_download=True), 0)
+    assert ok is True
+    assert error is None
+    assert queue.get_task_status("sid-force-1") == QueueStatus.QUEUED
+    queued = queue.get_task("sid-force-1")
+    assert queued is not None
+    assert queued.staged_path is None
+    assert queued.progress == 0.0
+    assert queued.force_redownload is True
+    assert kept_file.read_text() == "old bytes"
+
+
+def test_queue_release_force_refuses_live_download(monkeypatch):
+    import shelfmark.download.orchestrator as orchestrator
+
+    queue = BookQueue()
+    monkeypatch.setattr(orchestrator, "book_queue", queue)
+    monkeypatch.setattr(orchestrator, "ws_manager", None)
+
+    assert orchestrator.queue_release(_release_payload(), 0)[0] is True
+    queue.update_status("sid-force-1", QueueStatus.DOWNLOADING)
+
+    ok, error = orchestrator.queue_release(_release_payload(force_download=True), 0)
+    assert ok is False
+    assert error == "Download is still active"
+    assert getattr(error, "code", None) == "download_active"
+
+
+def test_queue_release_force_refuses_request_linked_task(monkeypatch):
+    import shelfmark.download.orchestrator as orchestrator
+
+    queue = BookQueue()
+    monkeypatch.setattr(orchestrator, "book_queue", queue)
+    monkeypatch.setattr(orchestrator, "ws_manager", None)
+
+    assert orchestrator.queue_release(_release_payload(_request_id=42), 0)[0] is True
+    queue.update_status("sid-force-1", QueueStatus.COMPLETE)
+
+    ok, error = orchestrator.queue_release(_release_payload(force_download=True), 0)
+    assert ok is False
+    assert error == "Request-linked downloads must be retried from requests"
+
+
+def test_force_redownload_skips_staged_path(monkeypatch, tmp_path):
+    import shelfmark.download.orchestrator as orchestrator
+
+    staged_file = tmp_path / "staged.epub"
+    staged_file.write_text("staged")
+    downloaded_file = tmp_path / "downloaded.epub"
+    downloaded_file.write_text("fresh")
+
+    task = DownloadTask(
+        task_id="task-force-staged-1",
+        source="direct_download",
+        title="Force Skip Staged",
+        staged_path=str(staged_file),
+        force_redownload=True,
+    )
+
+    handler = MagicMock()
+    handler.download = MagicMock(return_value=str(downloaded_file))
+    handler.post_process_cleanup = MagicMock()
+
+    mock_queue = MagicMock()
+    mock_queue.get_task.return_value = task
+    monkeypatch.setattr(orchestrator, "book_queue", mock_queue)
+    monkeypatch.setattr(orchestrator, "get_handler", lambda _source: handler)
+
+    seen_temp_files: list[Path] = []
+
+    def _post_process(temp_file, *_args, **_kwargs):
+        seen_temp_files.append(temp_file)
+        return "folder://done"
+
+    monkeypatch.setattr(orchestrator, "post_process_download", _post_process)
+
+    result = orchestrator._download_task(task.task_id, Event())
+
+    assert result == "folder://done"
+    handler.download.assert_called_once()
+    assert seen_temp_files == [downloaded_file]
+
+
+def test_retry_payload_roundtrips_force_redownload():
+    import shelfmark.download.orchestrator as orchestrator
+
+    task = DownloadTask(
+        task_id="sid-force-persist",
+        source="direct_download",
+        title="Force Persist",
+        force_redownload=True,
+        staged_path="/tmp/old.epub",
+    )
+    payload = orchestrator.serialize_task_for_retry(task)
+    assert payload["force_redownload"] is True
+    restored = orchestrator._restore_task_from_retry_payload(payload)
+    assert restored is not None
+    assert restored.force_redownload is True
+
+
+def test_retry_payload_defaults_force_redownload_absent():
+    import shelfmark.download.orchestrator as orchestrator
+
+    payload = orchestrator.serialize_task_for_retry(
+        DownloadTask(task_id="t", source="direct_download", title="T")
+    )
+    payload.pop("force_redownload", None)
+    restored = orchestrator._restore_task_from_retry_payload(payload)
+    assert restored is not None
+    assert restored.force_redownload is False

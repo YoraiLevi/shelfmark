@@ -47,7 +47,7 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
   shelfmark-dl --host http://127.0.0.1:8084 --isbn -n 9780140449136
 ```
 
-You get two JSON blocks: the metadata hits (`GET /api/metadata/search`) and the releases for the first hit (`GET /api/releases`). Nothing is queued and no file is written. The CLI acts on the **first** release in that list, so this is your chance to check that it is the edition you want — narrow it with `--source`, `--provider`, or `--limit` if it is not.
+Human mode (the default) prints action lines on stderr — including a “searching releases” line *before* the slow `GET /api/releases` call — and one-line summaries of the first metadata hit and the picked release (title, provider id, format, size, source_id). It does not dump full metadata or release JSON. Pass `-v` / `--verbose` for a one-line listing of every metadata hit and every wait status change (still human mode, still on stderr). Pass `--jsonl` for one JSON object per event on stdout. `-q` / `--quiet` stays silent on simulate (no file is written). `-q` conflicts with both `-v` and `--jsonl`.
 
 ### 4. Look at the queue
 
@@ -63,14 +63,14 @@ This prints the node's `GET /api/status` payload — the download queue, grouped
 ```bash
 mkdir downloads
 uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client#subdirectory=generated/python" \
-  shelfmark-dl --host http://127.0.0.1:8084 --isbn -o ./downloads -v --wait 180 9780140449136
+  shelfmark-dl --host http://127.0.0.1:8084 --isbn -o ./downloads --wait 180 9780140449136
 ```
 
 - `-o ./downloads` is what turns the run into a real download; the directory must be writable by you (the CLI writes locally, not on the node).
-- `-v` prints queue-polling progress so a long wait does not look like a hang.
+- Default **human** mode prints progress on stderr (and a TTY spinner while waiting) so a long queue poll does not look like a hang. `-q` / `--quiet` prints only the saved path on stdout. `-v` / `--verbose` stays in human mode and adds extra stderr detail. `--jsonl` emits JSON-line events on stdout instead.
 - `--wait 180` caps the poll at three minutes. Without `--wait`, `-o` implies `300`.
 
-On success the last line printed is the path of the file that was written into `./downloads`.
+On success, human and quiet modes print the saved path on stdout.
 
 > The command above uses `\` line continuations, which is POSIX shell syntax. In PowerShell use a backtick (`` ` ``), in `cmd.exe` use `^`, or just join it into one line.
 
@@ -98,12 +98,28 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 
 | Group | Flags |
 | :--- | :--- |
-| General | `-h` / `--help`, `--version`, `--host`, `-q` / `--quiet`, `-v` / `--verbose`, `--status` |
+| General | `-h` / `--help`, `--version`, `--host`, `-q` / `--quiet`, `-v` / `--verbose`, `--jsonl`, `--status` |
 | Search | `--isbn`, `--title`, `--provider`, `--source`, `--limit` |
 | Download | `-n` / `--simulate`, `-o` / `--output`, `--wait`, `--force-download` |
 | Auth | `-u` / `--username`, `-p` / `--password` |
 
+
+## Output modes
+
+`--jsonl`, `-v` / `--verbose`, and the human/quiet UX below are local CLI changes. `uvx --from git+…@feature/python-client` still serves the last pushed branch until this lands.
+
+| Mode | How to get it | stdout | stderr |
+| :--- | :--- | :--- | :--- |
+| **human** (default) | no flag | saved path only (when `-o`) | action lines, one-line hit/release summaries, TTY spinner while waiting |
+| **human + verbose** | `-v` / `--verbose` | saved path only (when `-o`) | human lines plus every metadata hit, every release candidate, and every wait status change |
+| **quiet** | `-q` / `--quiet` | saved path only (when `-o`); otherwise nothing | errors only |
+| **jsonl** | `--jsonl` | one compact JSON object per event | errors only |
+
+`-q` / `--quiet` cannot be combined with `-v` / `--verbose` or `--jsonl` (argparse error). `-v` is not an alias for `--jsonl`.
+
+
 ## Flags
+
 
 | Flag | Role |
 | :--- | :--- |
@@ -117,8 +133,12 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | `--source` | Release source (default `direct_download`) |
 | `--limit` | Metadata hits (default `10`) |
 | `--wait` | Poll the queue (default `300` with `-o`, else `0`) |
-| `--force-download` | On already-queued, `POST /api/download/<id>/retry` instead of copying the stored file |
+| `--force-download` | On already-queued, `POST /api/releases/download` with `force_download=true` instead of copying the stored file |
 | `-u` / `--username`, `-p` / `--password` | Login when `AUTH_METHOD` is not `none`. Prompt if `--username` is set and `--password` is omitted |
+| `-q` / `--quiet` | No progress; stdout is only the saved path (when `-o`). Conflicts with `-v` and `--jsonl` |
+| `-v` / `--verbose` | Extra human detail on stderr (every metadata hit, every release, every wait status change). Stays in human mode; not `--jsonl`. Conflicts with `-q` |
+| `--jsonl` | One JSON event per line on stdout (debug). Conflicts with `-q` |
+
 
 `--status` does not require `QUERY`. Every other mode does.
 
@@ -130,5 +150,5 @@ When `--output` is omitted, the CLI queues (unless `--simulate`) and prints stat
 
 When `AUTH_METHOD` is not `none`, pass `-u` / `-p` so the CLI can call `api_login_post` and reuse the cookie jar.
 
-`--force-download` is for an already-queued `source_id`: it calls `POST /api/download/<id>/retry` instead of copying the stored file. The node only retries tasks in **error** or **cancelled** state. A completed download, including a corrupt stored file, returns `409` with the node's reason. The CLI prints that and exits; it cannot delete history or cancel a completed task.
+`--force-download` is for an already-queued `source_id`: it calls `POST /api/releases/download` with `force_download=true` instead of copying the stored file. The node re-queues a **completed** release and asks the download client to add it again. A live download returns `409` `download_active`; the CLI then waits. Request-linked downloads stay forbidden. For torrents the client entry is removed with the data left on disk, so qBittorrent (and similar) will often recheck those files and finish without pulling new bytes. Direct-download and usenet paths do not have that recheck shortcut.
 

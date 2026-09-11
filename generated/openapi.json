@@ -995,7 +995,7 @@
       "post": {
         "operationId": "api_download_release_post",
         "summary": "Queue a release for download.",
-        "description": "Queue a release for download.\n\nThis endpoint is used when downloading from the ReleaseModal where the\nfrontend already has all the release data from the search results.\n\nRequest Body (JSON):\n    source (str): Release source (e.g., \"direct_download\")\n    source_id (str): ID within the source (e.g., AA MD5 hash)\n    title (str, optional): Book title\n    format (str, optional): File format\n    size (str, optional): Human-readable size\n    extra (dict, optional): Additional metadata\n    priority (int, optional): Queue priority, lower is sooner\n\nReturns:\n    flask.Response: JSON status object indicating success or failure.",
+        "description": "Queue a release for download.\n\nThis endpoint is used when downloading from the ReleaseModal where the\nfrontend already has all the release data from the search results.\n\nRequest Body (JSON):\n    source (str): Release source (e.g., \"direct_download\")\n    source_id (str): ID within the source (e.g., AA MD5 hash)\n    title (str, optional): Book title\n    format (str, optional): File format\n    size (str, optional): Human-readable size\n    extra (dict, optional): Additional metadata\n    priority (int, optional): Queue priority, lower is sooner\n    force_download (bool, optional): Re-queue a completed release; 409 if still active\n\nReturns:\n    flask.Response: JSON status object indicating success or failure.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1046,6 +1046,10 @@
                   "priority": {
                     "type": "integer",
                     "description": "Queue priority, lower is sooner"
+                  },
+                  "force_download": {
+                    "type": "boolean",
+                    "description": "Re-queue a completed release; 409 if still active"
                   }
                 },
                 "required": [
