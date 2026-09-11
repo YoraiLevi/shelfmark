@@ -191,6 +191,11 @@ def _add_search(parser):
     kind.add_argument("--isbn", action="store_true", help="Treat QUERY as an ISBN")
     kind.add_argument("--title", action="store_true", help="Treat QUERY as a title (default)")
     group.add_argument(
+        "--expand-search",
+        action="store_true",
+        help="Skip ISBN-first matching and search by title/author",
+    )
+    group.add_argument(
         "--provider",
         metavar="NAME",
         default="openlibrary",
@@ -341,29 +346,48 @@ def _hit_isbns(hit):
     return found
 
 
-async def search_releases(api, hit, query, isbn, source):
-    hit = hit if isinstance(hit, dict) else {}
-    kwargs = {
+def _release_kwargs(hit, source):
+    return {
         "provider": str(hit.get("provider") or "openlibrary"),
         "book_id": str(hit.get("provider_id") or hit.get("id") or ""),
         "source": source,
     }
-    if isbn:
-        kwargs["isbn"] = [query]
-    else:
-        isbns = _hit_isbns(hit)
-        if isbns:
-            kwargs["isbn"] = isbns
-        else:
-            # Direct download is ISBN-first; without one it needs title/author search.
-            kwargs["expand_search"] = True
-        kwargs["title"] = _text(hit.get("title")) or query
-        author = _text(hit.get("author") or hit.get("authors"))
-        if author:
-            kwargs["author"] = author
+
+
+async def _releases_call(api, kwargs):
     raw = await api.api_releases_get_without_preload_content(**kwargs)
     payload = await _read_json(raw)
     return (payload or {}).get("releases") or []
+
+
+async def search_releases(api, hit, query, isbn, source, *, expand_search=False, out=None):
+    hit = hit if isinstance(hit, dict) else {}
+    if isbn:
+        kwargs = _release_kwargs(hit, source)
+        kwargs["isbn"] = [query]
+        return await _releases_call(api, kwargs)
+    author = _text(hit.get("author") or hit.get("authors"))
+    isbns = [] if expand_search else _hit_isbns(hit)
+    if isbns:
+        kwargs = _release_kwargs(hit, source)
+        kwargs["isbn"] = isbns
+        kwargs["title"] = _text(hit.get("title")) or query
+        if author:
+            kwargs["author"] = author
+        releases = await _releases_call(api, kwargs)
+        if releases:
+            return releases
+        # A hit's ISBN often names a foreign edition the source holds no file
+        # for, so retry with the user's own words and ISBN matching disabled.
+        if out is not None:
+            out.say("No ISBN matches; searching by title\u2026")
+    # Direct download is ISBN-first; without one it needs title/author search.
+    kwargs = _release_kwargs(hit, source)
+    kwargs["expand_search"] = True
+    kwargs["title"] = query
+    if author:
+        kwargs["author"] = author
+    return await _releases_call(api, kwargs)
 
 
 def _already_queued(status, body):
@@ -709,7 +733,15 @@ async def _run_search(api, args, out):
     out.event("release_search", source=args.source, **_book_fields(books[0]))
     out.begin("searching releases")
     try:
-        releases = await search_releases(api, books[0], query, args.isbn, args.source)
+        releases = await search_releases(
+            api,
+            books[0],
+            query,
+            args.isbn,
+            args.source,
+            expand_search=args.expand_search,
+            out=out,
+        )
     finally:
         await out.end()
     if not releases:

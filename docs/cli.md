@@ -4,7 +4,7 @@
 
 Flow: metadata search (ISBN or title) → release search → queue download on the node → wait until the queue is done → copy the file off the node via `GET /api/localdownload`. The CLI never reads the node's filesystem.
 
-`QUERY` is positional (`ISBN` digits or title text). `--isbn` / `--title` only say how to treat it.
+`QUERY` is positional (`ISBN` digits or title text). `--isbn` / `--title` only say how to treat it. Title search sends the metadata hit's ISBNs first; if that returns nothing, the CLI retries with `expand_search` and the original `QUERY` (not the hit's title). `--expand-search` skips the ISBN pass.
 
 ## Usage tutorial
 
@@ -99,7 +99,7 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | Group | Flags |
 | :--- | :--- |
 | General | `-h` / `--help`, `--version`, `--host`, `-q` / `--quiet`, `-v` / `--verbose`, `--jsonl`, `--status` |
-| Search | `--isbn`, `--title`, `--provider`, `--source`, `--limit` |
+| Search | `--isbn`, `--title`, `--expand-search`, `--provider`, `--source`, `--limit` |
 | Download | `-n` / `--simulate`, `-o` / `--output`, `--wait`, `--force-download` |
 | Auth | `-u` / `--username`, `-p` / `--password` |
 
@@ -125,6 +125,7 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | :--- | :--- |
 | `--isbn` | Treat `QUERY` as an ISBN |
 | `--title` | Treat `QUERY` as a title (default) |
+| `--expand-search` | Skip ISBN-first matching and search by title/author (`expand_search` on `GET /api/releases`) |
 | `--host` | Node base URL (default `http://127.0.0.1:8084`) |
 | `-o` / `--output` `DIR` | Copy the finished file into `DIR` |
 | `-n` / `--simulate` | Search only; do not queue |
