@@ -210,6 +210,27 @@ def _add_search(parser):
     group.add_argument(
         "--limit", metavar="N", type=int, default=10, help="Metadata hits (default: 10)"
     )
+    group.add_argument(
+        "--author",
+        metavar="NAME",
+        help="Author filter; overrides the metadata hit's author (author= on /api/releases)",
+    )
+    group.add_argument(
+        "--language",
+        metavar="CODES",
+        help="Comma-separated ISO 639-1 codes (languages= on /api/releases)",
+    )
+    group.add_argument(
+        "--content-type",
+        choices=("ebook", "audiobook", "combined"),
+        default=None,
+        help="ebook, audiobook, or combined (default: node default)",
+    )
+    group.add_argument(
+        "--indexers",
+        metavar="NAMES",
+        help="Comma-separated Prowlarr indexer names (indexers= on /api/releases)",
+    )
 
 
 def _add_download(parser):
@@ -227,6 +248,18 @@ def _add_download(parser):
         "--force-download",
         action="store_true",
         help="Re-queue a completed release (POST force_download=true)",
+    )
+    group.add_argument(
+        "--format",
+        metavar="FMT",
+        help="Keep only releases with this format, e.g. epub (client-side filter)",
+    )
+    group.add_argument(
+        "--pick",
+        metavar="N",
+        type=int,
+        default=1,
+        help="1-based index into the filtered release list (default: 1)",
     )
 
 
@@ -261,6 +294,8 @@ def parse_args(argv=None):
     args = parser.parse_args(argv)
     if args.wait is None:
         args.wait = 300 if args.output else 0
+    if args.pick < 1:
+        parser.error("argument --pick: must be 1 or greater")
     if not args.status and not args.query:
         parser.error("the following arguments are required: QUERY")
     if args.quiet and args.jsonl:
@@ -324,10 +359,11 @@ async def maybe_login(api, username, password):
     await _read_json(raw)
 
 
-async def search_metadata(api, query, provider, limit):
-    raw = await api.api_metadata_search_get_without_preload_content(
-        query=query, provider=provider, limit=limit
-    )
+async def search_metadata(api, query, provider, limit, content_type=None):
+    kwargs = {"query": query, "provider": provider, "limit": limit}
+    if content_type:
+        kwargs["content_type"] = content_type
+    raw = await api.api_metadata_search_get_without_preload_content(**kwargs)
     payload = await _read_json(raw)
     return (payload or {}).get("books") or []
 
@@ -346,12 +382,29 @@ def _hit_isbns(hit):
     return found
 
 
-def _release_kwargs(hit, source):
-    return {
+def _filter_params(args):
+    """Release query params contributed by the optional filter flags."""
+    params = {}
+    for attr, param in (
+        ("author", "author"),
+        ("language", "languages"),
+        ("content_type", "content_type"),
+        ("indexers", "indexers"),
+    ):
+        value = (getattr(args, attr, None) or "").strip() if args is not None else ""
+        if value:
+            params[param] = value
+    return params
+
+
+def _release_kwargs(hit, source, args=None):
+    kwargs = {
         "provider": str(hit.get("provider") or "openlibrary"),
         "book_id": str(hit.get("provider_id") or hit.get("id") or ""),
         "source": source,
     }
+    kwargs.update(_filter_params(args))
+    return kwargs
 
 
 async def _releases_call(api, kwargs):
@@ -360,19 +413,23 @@ async def _releases_call(api, kwargs):
     return (payload or {}).get("releases") or []
 
 
-async def search_releases(api, hit, query, isbn, source, *, expand_search=False, out=None):
+async def search_releases(
+    api, hit, query, isbn, source, *, expand_search=False, out=None, args=None
+):
     hit = hit if isinstance(hit, dict) else {}
     if isbn:
-        kwargs = _release_kwargs(hit, source)
+        kwargs = _release_kwargs(hit, source, args)
         kwargs["isbn"] = [query]
+        if expand_search:
+            kwargs["expand_search"] = True
         return await _releases_call(api, kwargs)
     author = _text(hit.get("author") or hit.get("authors"))
     isbns = [] if expand_search else _hit_isbns(hit)
     if isbns:
-        kwargs = _release_kwargs(hit, source)
+        kwargs = _release_kwargs(hit, source, args)
         kwargs["isbn"] = isbns
         kwargs["title"] = _text(hit.get("title")) or query
-        if author:
+        if author and not kwargs.get("author"):
             kwargs["author"] = author
         releases = await _releases_call(api, kwargs)
         if releases:
@@ -382,10 +439,10 @@ async def search_releases(api, hit, query, isbn, source, *, expand_search=False,
         if out is not None:
             out.say("No ISBN matches; searching by title\u2026")
     # Direct download is ISBN-first; without one it needs title/author search.
-    kwargs = _release_kwargs(hit, source)
+    kwargs = _release_kwargs(hit, source, args)
     kwargs["expand_search"] = True
     kwargs["title"] = query
-    if author:
+    if author and not kwargs.get("author"):
         kwargs["author"] = author
     return await _releases_call(api, kwargs)
 
@@ -662,6 +719,29 @@ def _release_line(release):
     return " ".join(parts)
 
 
+def _filter_by_format(releases, wanted):
+    """Client-side format filter; the node has no format query param."""
+    target = (wanted or "").strip().casefold()
+    if not target:
+        return releases
+    matched = [
+        release
+        for release in releases
+        if _release_fields(release)["format"].strip().casefold() == target
+    ]
+    if not matched:
+        raise CliError("no releases in format %r" % wanted)
+    return matched
+
+
+def _pick_release(releases, pick):
+    if pick > len(releases):
+        raise CliError(
+            "--pick %d is out of range; %d release(s) to choose from" % (pick, len(releases))
+        )
+    return releases[pick - 1]
+
+
 async def _run_download(api, args, release, out):
     out.say("Queueing %s" % _release_line(release))
     queued = await queue_download(
@@ -720,7 +800,9 @@ async def _run_search(api, args, out):
     )
     out.begin("searching metadata")
     try:
-        books = await search_metadata(api, query, args.provider, args.limit)
+        books = await search_metadata(
+            api, query, args.provider, args.limit, content_type=args.content_type
+        )
     finally:
         await out.end()
     if not books:
@@ -733,6 +815,13 @@ async def _run_search(api, args, out):
     out.event("release_search", source=args.source, **_book_fields(books[0]))
     out.begin("searching releases")
     try:
+        filters = _filter_params(args)
+        if filters:
+            out.say(
+                "Release filters: %s"
+                % ", ".join("%s=%s" % item for item in sorted(filters.items()))
+            )
+            out.event("release_filters", **filters)
         releases = await search_releases(
             api,
             books[0],
@@ -741,6 +830,7 @@ async def _run_search(api, args, out):
             args.source,
             expand_search=args.expand_search,
             out=out,
+            args=args,
         )
     finally:
         await out.end()
@@ -750,12 +840,23 @@ async def _run_search(api, args, out):
         if using:
             raise CliError("no releases for %r (using %s)" % (query, using))
         raise CliError("no releases for %r" % query)
+    found = len(releases)
+    releases = _filter_by_format(releases, args.format)
+    if args.format:
+        out.say("%d of %d release(s) match format %s" % (len(releases), found, args.format))
     for release in releases:
         out.detail(_release_line(release))
-    out.say("%d release(s); picking %s" % (len(releases), _release_line(releases[0])))
+    picked = _pick_release(releases, args.pick)
+    out.say(
+        "%d release(s); picking #%d %s" % (len(releases), args.pick, _release_line(picked))
+    )
+    pick_event = {"index": args.pick, "count": len(releases)}
+    if args.format:
+        pick_event["format_filter"] = args.format
+    out.event("release_pick", **pick_event, **_release_fields(picked))
     if args.simulate:
         return 0
-    return await _run_download(api, args, releases[0], out)
+    return await _run_download(api, args, picked, out)
 
 
 async def async_main(args, out):

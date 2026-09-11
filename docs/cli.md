@@ -99,14 +99,14 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | Group | Flags |
 | :--- | :--- |
 | General | `-h` / `--help`, `--version`, `--host`, `-q` / `--quiet`, `-v` / `--verbose`, `--jsonl`, `--status` |
-| Search | `--isbn`, `--title`, `--expand-search`, `--provider`, `--source`, `--limit` |
-| Download | `-n` / `--simulate`, `-o` / `--output`, `--wait`, `--force-download` |
+| Search | `--isbn`, `--title`, `--expand-search`, `--provider`, `--source`, `--limit`, `--author`, `--language`, `--content-type`, `--indexers` |
+| Download | `-n` / `--simulate`, `-o` / `--output`, `--wait`, `--force-download`, `--format`, `--pick` |
 | Auth | `-u` / `--username`, `-p` / `--password` |
 
 
 ## Output modes
 
-`--jsonl`, `-v` / `--verbose`, and the human/quiet UX below are local CLI changes. `uvx --from git+…@feature/python-client` still serves the last pushed branch until this lands.
+`--jsonl`, `-v` / `--verbose`, and the human/quiet UX below are local CLI changes. `--author`, `--language`, `--content-type`, `--indexers`, `--format`, and `--pick` are too. `uvx --from git+…@feature/python-client` only has them after a later push.
 
 | Mode | How to get it | stdout | stderr |
 | :--- | :--- | :--- | :--- |
@@ -133,6 +133,12 @@ uvx --from "git+https://github.com/YoraiLevi/shelfmark.git@feature/python-client
 | `--provider` | Metadata provider (default `openlibrary`) |
 | `--source` | Release source (default `direct_download`) |
 | `--limit` | Metadata hits (default `10`) |
+| `--author` `NAME` | Pass `author=` on `GET /api/releases`. Overrides the metadata hit's author when set, including the expand-search retry |
+| `--language` `CODES` | Comma-separated ISO 639-1 codes; pass as `languages=` on `GET /api/releases` |
+| `--content-type` `{ebook,audiobook,combined}` | Pass `content_type=` on both `GET /api/metadata/search` and `GET /api/releases`. Omit to keep the node default (ebook) |
+| `--indexers` `NAMES` | Comma-separated Prowlarr indexer names; pass as `indexers=` on `GET /api/releases` only |
+| `--format` `FMT` | Client-side filter of the release list (case-insensitive match on release `format`, e.g. `epub`). Not an API param. Empty result is an error naming the format |
+| `--pick` `N` | 1-based index into the **filtered** release list (default `1`). Out of range is an error. Human mode prints which pick was used |
 | `--wait` | Poll the queue (default `300` with `-o`, else `0`) |
 | `--force-download` | On already-queued, `POST /api/releases/download` with `force_download=true` instead of copying the stored file |
 | `-u` / `--username`, `-p` / `--password` | Login when `AUTH_METHOD` is not `none`. Prompt if `--username` is set and `--password` is omitted |
