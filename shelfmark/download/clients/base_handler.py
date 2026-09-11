@@ -789,6 +789,31 @@ class ExternalClientHandler(DownloadHandler, ABC):
             status_callback("resolving", f"Checking {client.name}")
             category = self._get_category_for_task(client, task)
             existing = client.find_existing(request.url, category=category)
+            if task.force_redownload and existing:
+                download_id, _existing_status = existing
+                logger.info(
+                    "Force redownload: removing existing %s download %s",
+                    client.name,
+                    download_id,
+                )
+                try:
+                    if request.protocol == "usenet":
+                        self._remove_usenet_download(
+                            client,
+                            download_id,
+                            delete_files=True,
+                            archive=False,
+                        )
+                    else:
+                        client.remove(download_id, delete_files=False)
+                except _CLIENT_CLEANUP_ERRORS as exc:
+                    logger.warning(
+                        "Failed to remove existing download %s from %s: %s",
+                        download_id,
+                        client.name,
+                        exc,
+                    )
+                existing = None
 
             if existing:
                 download_id, existing_status = existing

@@ -1,0 +1,51 @@
+name: Generate Python API client
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "shelfmark/**"
+      - "cli/**"
+      - "scripts/export_openapi.py"
+      - "scripts/generate-python-client.sh"
+      - "scripts/install_cli_into_client.py"
+      - ".github/workflows/generate-python-client.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: "0.11.3"
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --group dev
+
+      - name: Generate client
+        run: bash scripts/generate-python-client.sh
+
+      - name: Commit generated client when it changed
+        run: |
+          git add generated/openapi.json generated/python
+          if git diff --cached --quiet; then
+            echo "No client changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: regenerate asyncio Python client from OpenAPI"
+          git push

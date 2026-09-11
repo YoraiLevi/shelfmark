@@ -271,7 +271,7 @@ Feature requests that fall outside the project scope (library integration, autom
 
 ## Health Monitoring
 
-The application exposes a health endpoint at `/api/health` (no authentication required). Add a health check to your compose:
+The application exposes a health endpoint at `/api/health` (no authentication required). The live OpenAPI 3 description is at `/openapi.json` and `/api/openapi.json` (also unauthenticated). See [HTTP API](docs/api.md). Add a health check to your compose:
 
 ```yaml
 healthcheck:

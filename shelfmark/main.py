@@ -62,6 +62,7 @@ from shelfmark.core.notifications import (
     notify_admin,
     notify_user,
 )
+from shelfmark.core.openapi import OPENAPI_PATHS, register_openapi_routes
 from shelfmark.core.prefix_middleware import PrefixMiddleware
 from shelfmark.core.release_inspect_routes import register_release_inspect_routes
 from shelfmark.core.request_helpers import (
@@ -126,7 +127,14 @@ app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0  # Disable caching
 app.config["APPLICATION_ROOT"] = BASE_PATH or "/"
 wsgi_app = cast(Any, ProxyFix(app.wsgi_app, x_host=1, x_port=1))
 if BASE_PATH:
-    wsgi_app = cast(Any, PrefixMiddleware(wsgi_app, BASE_PATH, bypass_paths={"/api/health"}))
+    wsgi_app = cast(
+        Any,
+        PrefixMiddleware(
+            wsgi_app,
+            BASE_PATH,
+            bypass_paths={"/api/health", *OPENAPI_PATHS},
+        ),
+    )
 app.wsgi_app = wsgi_app
 
 # Socket.IO async mode.
@@ -672,7 +680,7 @@ def proxy_auth_middleware() -> Response | tuple[Response, int] | None:
         return None
 
     # Skip for public endpoints that don't need auth
-    if request.path == "/api/health":
+    if request.path == "/api/health" or request.path in OPENAPI_PATHS:
         return None
 
     def get_proxy_header(header_name: str) -> str | None:
@@ -1029,6 +1037,36 @@ def _serialize_release(release: Release) -> dict:
 register_release_inspect_routes(app, login_required)
 
 
+def _force_download_guard(data: dict[str, Any]) -> tuple[Response, int] | None:
+    """Refuse force_download when the actor does not own the live queue task."""
+    if data.get("force_download") is not True:
+        return None
+
+    existing = backend.book_queue.get_task(data["source_id"])
+    if existing is None:
+        return None
+
+    if get_auth_mode() != "none":
+        is_admin, db_user_id, can_access_status = _resolve_status_scope()
+        actor_username = session.get("user_id")
+        normalized_actor_username = actor_username if isinstance(actor_username, str) else None
+        if not is_admin:
+            if not can_access_status or db_user_id is None:
+                return jsonify(
+                    {"error": "User identity unavailable", "code": "user_identity_unavailable"}
+                ), 403
+            if not _task_owned_by_actor(
+                existing,
+                actor_user_id=db_user_id,
+                actor_username=normalized_actor_username,
+            ):
+                return jsonify({"error": "Forbidden", "code": "download_not_owned"}), 403
+
+    if getattr(existing, "request_id", None) is not None:
+        return jsonify({"error": "Forbidden", "code": "requested_download_retry_forbidden"}), 403
+    return None
+
+
 @app.route("/api/releases/download", methods=["POST"])
 @login_required
 def api_download_release() -> Response | tuple[Response, int]:
@@ -1040,10 +1078,12 @@ def api_download_release() -> Response | tuple[Response, int]:
     Request Body (JSON):
         source (str): Release source (e.g., "direct_download")
         source_id (str): ID within the source (e.g., AA MD5 hash)
-        title (str): Book title
+        title (str, optional): Book title
         format (str, optional): File format
         size (str, optional): Human-readable size
         extra (dict, optional): Additional metadata
+        priority (int, optional): Queue priority, lower is sooner
+        force_download (bool, optional): Re-queue a completed release; 409 if still active
 
     Returns:
         flask.Response: JSON status object indicating success or failure.
@@ -1084,6 +1124,9 @@ def api_download_release() -> Response | tuple[Response, int]:
         )
         if on_behalf_error:
             return on_behalf_error
+        force_error = _force_download_guard(data)
+        if force_error is not None:
+            return force_error
         success, error_msg = backend.queue_release(
             release_payload,
             priority,
@@ -1093,6 +1136,12 @@ def api_download_release() -> Response | tuple[Response, int]:
 
         if success:
             return jsonify({"status": "queued", "priority": priority})
+        if getattr(error_msg, "code", None) == "download_active":
+            return jsonify({"error": str(error_msg), "code": "download_active"}), 409
+        if error_msg == "Request-linked downloads must be retried from requests":
+            return jsonify(
+                {"error": "Forbidden", "code": "requested_download_retry_forbidden"}
+            ), 403
         return jsonify({"error": error_msg or "Failed to queue release"}), 500
     except _OPERATIONAL_ERRORS as e:
         logger.error_trace(f"Release download error: {e}")
@@ -2052,7 +2101,7 @@ def api_login() -> Response | tuple[Response, int]:
     Request Body:
         username (str): Username
         password (str): Password
-        remember_me (bool): Whether to extend session duration
+        remember_me (bool, optional): Whether to extend session duration
 
     Returns:
         flask.Response: JSON with success status or error message.
@@ -3348,6 +3397,9 @@ def api_onboarding_skip() -> Response | tuple[Response, int]:
     except _IMPORT_OPERATIONAL_ERRORS as e:
         logger.error_trace(f"Onboarding skip error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+register_openapi_routes(app)
 
 
 # Catch-all route for React Router (must be last)

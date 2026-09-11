@@ -566,6 +566,8 @@ def register_request_routes(
 
     @app.route("/api/request-policy", methods=["GET"])
     def api_request_policy() -> ResponseReturnValue:
+        """Return request policy for the current user."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -638,6 +640,16 @@ def register_request_routes(
 
     @app.route("/api/requests", methods=["POST"])
     def api_create_request() -> ResponseReturnValue:
+        """Submit a book request.
+
+        Request Body (JSON):
+            book_data (dict): Book metadata object (required)
+            context (dict, optional): source, content_type, and request_level
+            release_data (dict, optional): Specific release when requesting a file
+            note (str, optional): Note for admins
+            on_behalf_of_user_id (int, optional): Admin-only target user
+        """
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -704,6 +716,12 @@ def register_request_routes(
 
     @app.route("/api/requests/batch", methods=["POST"])
     def api_create_requests_batch() -> ResponseReturnValue:
+        """Submit many book requests.
+
+        Request Body (JSON):
+            requests (list): List of request objects as for POST /api/requests (required)
+        """
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -818,6 +836,8 @@ def register_request_routes(
 
     @app.route("/api/requests", methods=["GET"])
     def api_list_requests() -> ResponseReturnValue:
+        """List the current user's book requests."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -849,6 +869,8 @@ def register_request_routes(
 
     @app.route("/api/requests/<int:request_id>", methods=["DELETE"])
     def api_cancel_request(request_id: int) -> ResponseReturnValue:
+        """Cancel one of the current user's requests."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -903,6 +925,8 @@ def register_request_routes(
 
     @app.route("/api/admin/requests", methods=["GET"])
     def api_admin_list_requests() -> ResponseReturnValue:
+        """Admin list of book requests."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -924,6 +948,8 @@ def register_request_routes(
 
     @app.route("/api/admin/requests/count", methods=["GET"])
     def api_admin_request_counts() -> ResponseReturnValue:
+        """Admin counts of pending book requests."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -941,6 +967,8 @@ def register_request_routes(
 
     @app.route("/api/admin/requests/<int:request_id>/fulfil", methods=["POST"])
     def api_admin_fulfil_request(request_id: int) -> ResponseReturnValue:
+        """Fulfil a book request."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate
@@ -1007,6 +1035,8 @@ def register_request_routes(
 
     @app.route("/api/admin/requests/<int:request_id>/reject", methods=["POST"])
     def api_admin_reject_request(request_id: int) -> ResponseReturnValue:
+        """Reject a book request."""
+
         auth_gate = _require_request_endpoints_available(resolve_auth_mode)
         if auth_gate is not None:
             return auth_gate

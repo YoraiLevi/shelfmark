@@ -946,6 +946,82 @@ class TestProwlarrHandlerExistingDownload:
                 # Should NOT have called add_download
                 mock_client.add_download.assert_not_called()
 
+    def test_force_redownload_skips_existing_complete_download(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            source_file = Path(tmp_dir) / "source" / "book.epub"
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text("old content")
+            downloaded_file = Path(tmp_dir) / "fresh.epub"
+            downloaded_file.write_text("fresh content")
+
+            staging_dir = Path(tmp_dir) / "staging"
+            staging_dir.mkdir()
+
+            mock_client = MagicMock()
+            mock_client.name = "test_client"
+            mock_client.find_existing.return_value = (
+                "existing_id",
+                DownloadStatus(
+                    progress=100,
+                    state=DownloadState.COMPLETE,
+                    message="Complete",
+                    complete=True,
+                    file_path=str(source_file),
+                ),
+            )
+            mock_client.add_download.return_value = "new_id"
+            mock_client.remove.return_value = True
+            mock_client.get_status.return_value = DownloadStatus(
+                progress=100,
+                state=DownloadState.COMPLETE,
+                message="Complete",
+                complete=True,
+                file_path=str(downloaded_file),
+            )
+            mock_client.get_download_path.return_value = str(downloaded_file)
+
+            with (
+                patch(
+                    "shelfmark.release_sources.prowlarr.handler.get_release",
+                    return_value={
+                        "protocol": "torrent",
+                        "magnetUrl": "magnet:?xt=urn:btih:abc123",
+                    },
+                ),
+                patch(
+                    "shelfmark.release_sources.prowlarr.handler.get_client",
+                    return_value=mock_client,
+                ),
+                patch(
+                    "shelfmark.release_sources.prowlarr.handler.remove_release",
+                ),
+                patch(
+                    "shelfmark.download.staging.get_staging_dir",
+                    return_value=staging_dir,
+                ),
+            ):
+                handler = ProwlarrHandler()
+                task = DownloadTask(
+                    task_id="force-existing-complete",
+                    source="prowlarr",
+                    title="Test Book",
+                    force_redownload=True,
+                )
+                cancel_flag = Event()
+                recorder = ProgressRecorder()
+
+                result = handler.download(
+                    task=task,
+                    cancel_flag=cancel_flag,
+                    progress_callback=recorder.progress_callback,
+                    status_callback=recorder.status_callback,
+                )
+
+                assert result is not None
+                mock_client.find_existing.assert_called_once()
+                mock_client.remove.assert_called_once_with("existing_id", delete_files=False)
+                mock_client.add_download.assert_called_once()
+
 
 class TestProwlarrHandlerPolling:
     """Tests for download polling behavior."""

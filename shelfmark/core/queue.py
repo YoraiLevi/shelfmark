@@ -62,18 +62,31 @@ class BookQueue:
             )
         )
 
-    def add(self, task: DownloadTask) -> bool:
-        """Add a download task to the queue. Returns False if already exists."""
+    def add(self, task: DownloadTask, *, force: bool = False) -> bool:
+        """Add a download task to the queue. Returns False if already exists.
+
+        ``force=True`` replaces a COMPLETE task in place. Live statuses still refuse.
+        """
         hook: Callable[[str, DownloadTask], None] | None = None
         with self._lock:
             task_id = task.task_id
+            current = self._status.get(task_id)
 
-            # Don't add if already exists and not in error/cancelled state
-            if task_id in self._status and self._status[task_id] not in [
+            if current is not None and current not in [
                 QueueStatus.ERROR,
                 QueueStatus.CANCELLED,
             ]:
-                return False
+                if not (force and current == QueueStatus.COMPLETE):
+                    return False
+                self._active_downloads.pop(task_id, None)
+                self._cancel_flags.pop(task_id, None)
+                remaining: list[QueueItem] = []
+                while not self._queue.empty():
+                    item = self._queue.get_nowait()
+                    if item.book_id != task_id:
+                        remaining.append(item)
+                for item in remaining:
+                    self._queue.put(item)
 
             # Ensure added_time is set
             if task.added_time == 0:

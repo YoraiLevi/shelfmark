@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from shelfmark.core.models import DownloadTask
+from shelfmark.download.orchestrator import QueueReleaseError
 
 
 @pytest.fixture(scope="module")
@@ -306,6 +307,134 @@ class TestReleaseDownloadEndpointGuardrails:
 
         assert resp.status_code == 503
         assert resp.get_json() == {"error": "User database unavailable"}
+        mock_queue_release.assert_not_called()
+
+    def test_force_download_true_is_forwarded_to_queue_release(self, main_module, client):
+        captured: dict[str, object] = {}
+
+        def fake_queue_release(release_data, priority, user_id=None, username=None):
+            captured["release_data"] = release_data
+            return True, None
+
+        payload = {
+            "source": "direct_download",
+            "source_id": "release-force",
+            "title": "Force Title",
+            "force_download": True,
+        }
+        with patch.object(main_module, "get_auth_mode", return_value="none"):
+            with patch.object(main_module.backend, "queue_release", side_effect=fake_queue_release):
+                resp = client.post("/api/releases/download", json=payload)
+
+        assert resp.status_code == 200
+        assert resp.get_json() == {"status": "queued", "priority": 0}
+        assert captured["release_data"]["force_download"] is True
+
+    def test_duplicate_without_force_still_returns_500(self, main_module, client):
+        payload = {
+            "source": "direct_download",
+            "source_id": "release-dup",
+            "title": "Dup Title",
+        }
+        with patch.object(main_module, "get_auth_mode", return_value="none"):
+            with patch.object(
+                main_module.backend,
+                "queue_release",
+                return_value=(False, "Release is already in the download queue"),
+            ) as mock_queue_release:
+                resp = client.post("/api/releases/download", json=payload)
+
+        assert resp.status_code == 500
+        assert resp.get_json() == {"error": "Release is already in the download queue"}
+        mock_queue_release.assert_called_once()
+
+    def test_force_while_live_returns_409_download_active(self, main_module, client):
+        payload = {
+            "source": "direct_download",
+            "source_id": "release-live",
+            "title": "Live Title",
+            "force_download": True,
+        }
+        with patch.object(main_module, "get_auth_mode", return_value="none"):
+            with patch.object(
+                main_module.backend,
+                "queue_release",
+                return_value=(
+                    False,
+                    QueueReleaseError("Download is still active", code="download_active"),
+                ),
+            ) as mock_queue_release:
+                resp = client.post("/api/releases/download", json=payload)
+
+        assert resp.status_code == 409
+        assert resp.get_json() == {
+            "error": "Download is still active",
+            "code": "download_active",
+        }
+        mock_queue_release.assert_called_once()
+
+    def test_non_owner_cannot_force_download(self, main_module, client):
+        owner = _create_user(main_module, prefix="owner")
+        actor = _create_user(main_module, prefix="actor")
+        _set_authenticated_session(
+            client,
+            user_id=actor["username"],
+            db_user_id=actor["id"],
+            is_admin=False,
+        )
+        task = DownloadTask(
+            task_id="owned-force-1",
+            source="direct_download",
+            title="Owned Task",
+            user_id=owner["id"],
+            username=owner["username"],
+        )
+        payload = {
+            "source": "direct_download",
+            "source_id": "owned-force-1",
+            "title": "Owned Task",
+            "force_download": True,
+        }
+
+        with patch.object(main_module, "get_auth_mode", return_value="builtin"):
+            with patch.object(main_module.backend.book_queue, "get_task", return_value=task):
+                with patch.object(main_module.backend, "queue_release") as mock_queue_release:
+                    resp = client.post("/api/releases/download", json=payload)
+
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "download_not_owned"
+        mock_queue_release.assert_not_called()
+
+    def test_force_download_forbidden_for_request_linked_task(self, main_module, client):
+        user = _create_user(main_module, prefix="requester")
+        _set_authenticated_session(
+            client,
+            user_id=user["username"],
+            db_user_id=user["id"],
+            is_admin=False,
+        )
+        task = DownloadTask(
+            task_id="requested-force-1",
+            source="direct_download",
+            title="Requested Task",
+            user_id=user["id"],
+            username=user["username"],
+            request_id=99,
+        )
+        payload = {
+            "source": "direct_download",
+            "source_id": "requested-force-1",
+            "title": "Requested Task",
+            "force_download": True,
+        }
+
+        with patch.object(main_module, "get_auth_mode", return_value="builtin"):
+            with patch.object(main_module.backend.book_queue, "get_task", return_value=task):
+                with patch.object(main_module.backend, "queue_release") as mock_queue_release:
+                    resp = client.post("/api/releases/download", json=payload)
+
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "requested_download_retry_forbidden"
         mock_queue_release.assert_not_called()
 
 

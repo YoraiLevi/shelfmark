@@ -1,8 +1,14 @@
 name: Create and publish Docker images
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+    paths-ignore:
+      - "docs/**"
+      - "generated/**"
+      - "**/*.md"
   schedule:
     # Nightly at 03:17 UTC — only builds if there are new commits on main
     # since the last successful run (see check-changes job).
@@ -67,10 +73,10 @@ jobs:
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@v7.0.0
 
       - name: Log in to the Container registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -78,7 +84,7 @@ jobs:
 
       - name: Extract metadata for ${{ matrix.target }} image
         id: meta
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        uses: docker/metadata-action@v6.2.0
         env:
           # Annotate both the per-platform manifests and the multi-arch image
           # index. The index level is what manifest-list consumers (Renovate's
@@ -96,11 +102,11 @@ jobs:
             type=ref,event=tag
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@v4.3.0
 
       - name: Build and push ${{ matrix.target }} Docker image
         id: push
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@v7.3.0
         with:
           platforms: linux/amd64,linux/arm64
           context: .
@@ -115,7 +121,7 @@ jobs:
 
       - name: Generate artifact attestation for ${{ matrix.target }} image
         if: github.event_name != 'pull_request'
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        uses: actions/attest-build-provenance@v4.2.2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}${{ matrix.image_name_suffix }}
           subject-digest: ${{ steps.push.outputs.digest }}
@@ -134,14 +140,14 @@ jobs:
       LEGACY_NAME: calibre-web-automated-book-downloader
     steps:
       - name: Log in to registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@v4.3.0
 
       - name: Create legacy aliases
         run: |

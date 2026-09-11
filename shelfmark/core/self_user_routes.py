@@ -206,6 +206,8 @@ def register_self_user_routes(app: Flask, user_db: UserDB) -> None:
     @app.route("/api/users/me/edit-context", methods=["GET"])
     @_require_authenticated_user
     def users_me_edit_context() -> Response | tuple[Response, int]:
+        """Return edit-form context for the current user."""
+
         user_id, user, user_error = _get_current_user(user_db)
         if user_error:
             return user_error
@@ -272,6 +274,8 @@ def register_self_user_routes(app: Flask, user_db: UserDB) -> None:
     @app.route("/api/users/me/notification-preferences/test", methods=["POST"])
     @_require_authenticated_user
     def users_me_test_notification_preferences() -> Response | tuple[Response, int]:
+        """Send a test notification to the current user."""
+
         user_id, _user, user_error = _get_current_user(user_db)
         if user_error:
             return user_error
@@ -288,6 +292,12 @@ def register_self_user_routes(app: Flask, user_db: UserDB) -> None:
     @app.route("/api/users/me", methods=["PUT"])
     @_require_authenticated_user
     def users_me_update() -> Response | tuple[Response, int]:
+        """Update the current user.
+
+        Request Body (JSON):
+            JSON object of user fields and settings to update.
+        """
+
         user_id, user, user_error = _get_current_user(user_db)
         if user_error:
             return user_error
